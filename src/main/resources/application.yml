@@ -14,4 +14,26 @@ spring:
     url: ${POSTGRES_DB_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    driver: org.postgresql.Driver
+  liquibase:
+    parameters:
+      charSet: UTF-8
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+logging:
+  level:
+    root: WARN
+    org.springframework: DEBUG
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.liquibase: INFO
+    com.airplane: DEBUG
+
+  file:
+    name: logs/userposts.log
+    max-size: 10MB
+    max-history: 7
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss} %-5level %logger{36} - %msg%n"

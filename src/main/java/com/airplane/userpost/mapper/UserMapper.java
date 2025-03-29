@@ -16,12 +16,11 @@ public class UserMapper {
         );
     }
 
+    //No copying id and createdAt fields!
     public User toUser(UserDTO userDTO) {
         User user = new User();
-        user.setId(userDTO.id());
         user.setUserName(userDTO.userName());
         user.setEmail(userDTO.email());
-        user.setCreatedAt(userDTO.createdAt());
         return user;
     }
 }
