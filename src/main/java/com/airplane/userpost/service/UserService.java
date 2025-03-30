@@ -78,7 +78,7 @@ public class UserService {
         }
 
         //checks that new username unique
-        if (!existingUser.getUserName().equals(userDTO.userName())) {
+        if (userDTO.userName() != null && !existingUser.getUserName().equals(userDTO.userName())) {
             Optional<User> userByName = userRepository.findByUserName(userDTO.userName());
             if (userByName.isPresent()) return Optional.empty();
             existingUser.setUserName(userDTO.userName());
@@ -86,7 +86,7 @@ public class UserService {
         }
 
         //checks that new email unique
-        if (!existingUser.getEmail().equals(userDTO.email())) {
+        if (userDTO.email() != null && !existingUser.getEmail().equals(userDTO.email())) {
             Optional<User> userByEmail = userRepository.findByEmail(userDTO.email());
             if (userByEmail.isPresent()) return Optional.empty();
             existingUser.setEmail(userDTO.email());

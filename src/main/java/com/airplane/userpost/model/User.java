@@ -2,6 +2,7 @@ package com.airplane.userpost.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.Generated;
 
 import java.time.LocalDateTime;
 
@@ -21,5 +22,6 @@ public class User {
     private String email;
 
     @Column(name = "created_at", insertable = false, updatable = false)
+    @Generated
     private LocalDateTime createdAt;
 }
