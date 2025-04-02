@@ -34,16 +34,14 @@ public class UserController {
     public ResponseEntity<UserDTO> userById(@PathVariable Long id) {
         log.info("User request with id '{}' received.", id);
 
-        Optional<UserDTO> user = userService.getUserById(id);
-        return user.map(u -> new ResponseEntity<>(u, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
     public ResponseEntity<UserDTO> newUser(@RequestBody UserDTO userDTO) {
         log.info("NewUser request received. Username: {}, email: {}",
-                userDTO.userName(),
-                userDTO.email());
+                userDTO.getUserName(),
+                userDTO.getEmail());
 
         Optional<UserDTO> savedUser = userService.createNewUser(userDTO);
         return savedUser.map(user -> new ResponseEntity<>(user, HttpStatus.CREATED))
