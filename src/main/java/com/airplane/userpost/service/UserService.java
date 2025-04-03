@@ -61,8 +61,8 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Optional<UserDTO> createNewUser(UserDTO userDTO) {
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public UserDTO createNewUser(UserDTO userDTO) {
 
         if(userDTO == null) {
             throw new IllegalArgumentException("User creation failed: null DTO received");
@@ -72,55 +72,33 @@ public class UserService {
             throw new IllegalArgumentException("User creation failed: bad DTO field");
         }
 
-        Boolean usernameExist = userRepository.existsByUserName(userDTO.getUserName());
-        if(usernameExist) {
-            throw new DataIntegrityViolationException("User creation failed: username already exists");
-        }
-
-        Boolean emailExist = userRepository.existsByEmail(userDTO.getEmail());
-        if(emailExist) {
-            throw new DataIntegrityViolationException("User creation failed: email already exists");
-        }
-
         User newUser = userMapper.toUser(userDTO);
         User savedUser = userRepository.save(newUser);
         log.info("New user with id {} created.", savedUser.getId());
 
-        return Optional.of(userMapper.toDTO(savedUser));
+        return userMapper.toDTO(savedUser);
     }
 
     //do not updates CreatedAt field
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Optional<UserDTO> updateExistingUser(Long userId, UserDTO userDTO) {
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public UserDTO updateExistingUser(Long userId, UserDTO userDTO) {
 
         if(userDTO == null) {
             throw new IllegalArgumentException("User update failed: received null DTO");
         }
 
+        if(userDTO.getUserName() == null || userDTO.getEmail() == null) {
+            throw new IllegalArgumentException("User creation failed: bad DTO field");
+        }
+
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User update failed: user not found with Id " + userId));
 
-        //checks that new username unique
-        if (userDTO.getUserName() != null && !existingUser.getUserName().equals(userDTO.getUserName())) {
-            Boolean usernameExist = userRepository.existsByUserName(userDTO.getUserName());
-            if(usernameExist) {
-                throw new DataIntegrityViolationException("Username update failed: username already exists");
-            }
+        existingUser.setUserName(userDTO.getUserName());
+        log.info("User id: {}. Username updated.", existingUser.getId());
 
-            existingUser.setUserName(userDTO.getUserName());
-            log.info("User id: {}. Username updated.", existingUser.getId());
-        }
-
-        //checks that new email unique
-        if (userDTO.getEmail() != null && !existingUser.getEmail().equals(userDTO.getEmail())) {
-            Boolean emailExist = userRepository.existsByEmail(userDTO.getEmail());
-            if(emailExist) {
-                throw new DataIntegrityViolationException("Email update failed: email already exists");
-            }
-
-            existingUser.setEmail(userDTO.getEmail());
-            log.info("User id: {}. Email updated.", existingUser.getId());
-        }
+        existingUser.setEmail(userDTO.getEmail());
+        log.info("User id: {}. Email updated.", existingUser.getId());
 
         Set<Post> posts = new HashSet<>();
         for(PostDTO postDTO: userDTO.getPosts()) {
@@ -137,7 +115,7 @@ public class UserService {
         //update user
         User savedUser = userRepository.save(existingUser);
         log.info("User id: {}. Updated successfully.", existingUser.getId());
-        return Optional.of(userMapper.toDTO(savedUser));
+        return userMapper.toDTO(savedUser);
     }
 
     @Transactional

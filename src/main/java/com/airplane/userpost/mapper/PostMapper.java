@@ -5,14 +5,13 @@ import com.airplane.userpost.exception.MapperException;
 import com.airplane.userpost.model.Post;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 
 @Component
 public class PostMapper {
 
     public PostDTO toDTO(Post post) {
         if(post == null) throw new MapperException("Mapper received null Post.");
-        if(post.getUser() == null) throw new MapperException("Mapper received Post with null User");
+        if(post.getUser() == null) throw new MapperException("Mapper received Post with null User.");
 
         return new PostDTO(post.getId(), post.getTitle(),
                 post.getText(), post.getCreatedAt(), post.getUser().getId());

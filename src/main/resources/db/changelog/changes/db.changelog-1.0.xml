@@ -20,8 +20,8 @@
         </createTable>
 
         <insert tableName="users">
-            <column name="username" value="TestUser"/>
-            <column name="email" value="Test@example.com"/>
+            <column name="username" value="testuser"/>
+            <column name="email" value="test@example.com"/>
             <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
         </insert>
 

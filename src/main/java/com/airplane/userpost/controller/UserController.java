@@ -43,18 +43,14 @@ public class UserController {
                 userDTO.getUserName(),
                 userDTO.getEmail());
 
-        Optional<UserDTO> savedUser = userService.createNewUser(userDTO);
-        return savedUser.map(user -> new ResponseEntity<>(user, HttpStatus.CREATED))
-                .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.FOUND));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createNewUser(userDTO));
     }
 
     @PutMapping(path = "/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         log.info("Update user request received for id '{}'", id);
 
-        Optional<UserDTO> updatedUser = userService.updateExistingUser(id, userDTO);
-        return updatedUser.map(user -> new ResponseEntity<>(user, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.FOUND));
+        return ResponseEntity.status(HttpStatus.OK).body(userService.updateExistingUser(id, userDTO));
     }
 
     @DeleteMapping(path = "/{id}")

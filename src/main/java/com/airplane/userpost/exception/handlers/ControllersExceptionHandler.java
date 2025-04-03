@@ -24,7 +24,7 @@ public class ControllersExceptionHandler {
     }
 
     @ExceptionHandler(PostNotFoundException.class)
-    public ResponseEntity<String> handlePostNotFoundException(UserNotFoundException exception) {
+    public ResponseEntity<String> handlePostNotFoundException(PostNotFoundException exception) {
         log.warn(exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(exception.getMessage());

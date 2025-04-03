@@ -76,4 +76,31 @@ public class PostService {
 
         return postMapper.toDTO(savedPost);
     }
+
+    @Transactional
+    public PostDTO updateExistingPost(Long postId, PostDTO postDTO) {
+
+        if(postId == null || postDTO == null || postDTO.title() == null) {
+            throw new IllegalArgumentException("Post update failed: bad argument received.");
+        }
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post wasn't found in DB for Id: " + postId));
+
+        //no need to update user, id and createdAt fields
+        post.setTitle(postDTO.title());
+        post.setText(postDTO.text());
+
+        Post savedPost = postRepository.save(post);
+        log.info("Post with Id '{}' updated successfully.", savedPost.getId());
+        return postMapper.toDTO(savedPost);
+    }
+
+    @Transactional
+    public void deletePostById(Long postId) {
+
+        postRepository.deleteById(postId);
+
+        log.info("Post with Id '{}' deleted successfully.", postId);
+    }
 }

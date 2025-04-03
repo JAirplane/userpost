@@ -2,6 +2,7 @@ package com.airplane.userpost.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Generated;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @EqualsAndHashCode.Exclude
     @Column(name = "created_at", insertable = false, updatable = false)
     @Generated
     private LocalDateTime createdAt;
@@ -38,5 +40,12 @@ public class User {
     public void removePost(Post post) {
         posts.remove(post);
         post.setUser(null);
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void normalizeUniqueFields() {
+        this.setUserName(this.userName.toLowerCase());
+        this.setEmail(this.email.toLowerCase());
     }
 }
