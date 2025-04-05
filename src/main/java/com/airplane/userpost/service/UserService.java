@@ -10,14 +10,12 @@ import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -83,8 +81,8 @@ public class UserService {
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public UserDTO updateExistingUser(Long userId, UserDTO userDTO) {
 
-        if(userDTO == null) {
-            throw new IllegalArgumentException("User update failed: received null DTO");
+        if(userId == null || userDTO == null) {
+            throw new IllegalArgumentException("User update failed: received null arg");
         }
 
         if(userDTO.getUserName() == null || userDTO.getEmail() == null) {
@@ -92,7 +90,7 @@ public class UserService {
         }
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User update failed: user not found with Id " + userId));
+                .orElseThrow(() -> new UserNotFoundException("User update failed: user not found with Id: " + userId));
 
         existingUser.setUserName(userDTO.getUserName());
         log.info("User id: {}. Username updated.", existingUser.getId());
@@ -100,17 +98,23 @@ public class UserService {
         existingUser.setEmail(userDTO.getEmail());
         log.info("User id: {}. Email updated.", existingUser.getId());
 
-        Set<Post> posts = new HashSet<>();
+        Set<Post> posts = existingUser.getPosts();
+        posts.clear();
         for(PostDTO postDTO: userDTO.getPosts()) {
             if(postDTO.title() != null) {
-                Post post = postRepository.findById(postDTO.id()).orElse(new Post());
+                Post post = null;
+                if(postDTO.id() == null) {
+                    post = new Post();
+                }
+                else {
+                    post = postRepository.findById(postDTO.id()).orElse(new Post());
+                }
                 post.setTitle(postDTO.title());
                 post.setText(postDTO.text());
                 post.setUser(existingUser);
                 posts.add(post);
             }
         }
-        existingUser.setPosts(posts);
 
         //update user
         User savedUser = userRepository.save(existingUser);

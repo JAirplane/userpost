@@ -1,7 +1,8 @@
 package com.airplane.userpost.service;
 
 import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.exception.PostNotFoundException;
+import com.airplane.userpost.exception.UserNotFoundException;
 import com.airplane.userpost.mapper.PostMapper;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
@@ -9,16 +10,15 @@ import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 public class PostServiceTest {
 
@@ -88,6 +88,169 @@ public class PostServiceTest {
         PostDTO postDTO = postService.getPostById(1L);
 
         assertEquals(expectedPost, postDTO);
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenPostIdIsNull() {
+
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.getPostById(null));
+        assertEquals("Getting Post by Id failed: null postId received", exception.getMessage());
+    }
+
+    @Test
+    public void shouldThrowPostNotFoundExceptionWhenPostNotFoundInDB() {
+
+        when(postRepository.findById(100L)).thenReturn(Optional.empty());
+        Exception exception = assertThrows(PostNotFoundException.class,
+                () -> postService.getPostById(100L));
+
+        assertEquals("Post not found with Id: 100", exception.getMessage());
+    }
+
+    @Test
+    public void shouldReturnCreatedPostDTO() {
+        Long userIdArg = 1L;
+        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+
+        User user = testUser(userIdArg, "test name", "test mail");
+
+        Post postFromMapper = testPost(null, "test title", "some text");
+        postFromMapper.setUser(user);
+
+        Post savedPost = testPost(2L, "test title", "some text");
+        savedPost.setUser(user);
+
+        PostDTO postDTOFromMapper = testPostDTO(2L, "test title", "some text", user.getId());
+
+        PostDTO expected = testPostDTO(2L, "test title", "some text", userIdArg);
+
+        when(userRepository.findById(userIdArg)).thenReturn(Optional.of(user));
+        when(postMapper.toPost(postDTOArg)).thenReturn(postFromMapper);
+        when(postRepository.save(postFromMapper)).thenReturn(savedPost);
+        when(postMapper.toDTO(savedPost)).thenReturn(postDTOFromMapper);
+
+        PostDTO result = postService.createNewPost(userIdArg, postDTOArg);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenCreatingNewPost() {
+
+        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+        PostDTO postDTOArgNullTitle = testPostDTO(11L, null, "some text", null);
+        Long userIdArg = 1L;
+
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.createNewPost(null, postDTOArg));
+
+        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
+
+        exception= assertThrows(IllegalArgumentException.class,
+                () -> postService.createNewPost(userIdArg, null));
+
+        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
+
+        exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.createNewPost(userIdArg, postDTOArgNullTitle));
+
+        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
+    }
+
+    @Test
+    public void shouldThrowUserNotFoundExceptionWhenCreatingNewPost() {
+
+        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+        Long userIdArg = 1L;
+
+        when(userRepository.findById(userIdArg)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(UserNotFoundException.class,
+                () -> postService.createNewPost(userIdArg, postDTOArg));
+
+        assertEquals("User not found on DB with Id: 1", exception.getMessage());
+    }
+
+    @Test
+    public void shouldReturnUpdatedPost() {
+        Long postIdArg = 1L;
+        PostDTO postDTOArg = testPostDTO(null, "changed title", "changed text", null);
+
+        User user = testUser(2L, "test name", "test mail");
+        Post postFromDB = testPost(postIdArg, "other title", "other text");
+        postFromDB.setUser(user);
+
+        Post updatedPost = testPost(postIdArg, "changed title", "changed text");
+        updatedPost.setUser(user);
+
+        Post updatedAndSavedPost = testPost(postIdArg, "changed title", "changed text");
+        updatedPost.setUser(user);
+
+        PostDTO postDTOFromMapper = testPostDTO(postIdArg, "changed title", "changed text", 2L);
+
+        PostDTO expected = testPostDTO(postIdArg, "changed title", "changed text", 2L);
+
+        when(postRepository.findById(postIdArg)).thenReturn(Optional.of(postFromDB));
+        when(postRepository.save(updatedPost)).thenReturn(updatedAndSavedPost);
+        when(postMapper.toDTO(updatedAndSavedPost)).thenReturn(postDTOFromMapper);
+
+        PostDTO result = postService.updateExistingPost(postIdArg, postDTOArg);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenUpdateExistingPost() {
+
+        PostDTO postDTOArg = testPostDTO(null, "test title", "some text", 2L);
+        PostDTO postDTOArgNullTitle = testPostDTO(null, null, "some text", 2L);
+        Long postIdArg = 1L;
+
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.updateExistingPost(null, postDTOArg));
+
+        assertEquals("Post update failed: bad argument received.", exception.getMessage());
+
+        exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.updateExistingPost(postIdArg, null));
+
+        assertEquals("Post update failed: bad argument received.", exception.getMessage());
+
+        exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.updateExistingPost(postIdArg, postDTOArgNullTitle));
+
+        assertEquals("Post update failed: bad argument received.", exception.getMessage());
+    }
+
+    @Test
+    public void shouldThrowPostNotFoundExceptionWhenUpdatingPost() {
+
+        PostDTO postDTOArg = testPostDTO(null, "test title", "some text", null);
+        Long postIdArg = 1L;
+
+        when(userRepository.findById(postIdArg)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(PostNotFoundException.class,
+                () -> postService.updateExistingPost(postIdArg, postDTOArg));
+
+        assertEquals("Post wasn't found in DB for Id: 1", exception.getMessage());
+    }
+
+    @Test
+    public void shouldDeletePost() {
+
+        postService.deletePostById(1L);
+        verify(postRepository).deleteById(1L);
+    }
+
+    @Test
+    public void shouldThrowIllegalArgumentExceptionWhenDeletePost() {
+
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> postService.deletePostById(null));
+
+        assertEquals("Post deleteById failed: null postId", exception.getMessage());
     }
 
     private Post testPost(Long id, String title, String text) {

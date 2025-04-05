@@ -64,7 +64,7 @@ public class PostService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found on DB with Id:" + userId));
+                .orElseThrow(() -> new UserNotFoundException("User not found on DB with Id: " + userId));
 
         Post post = postMapper.toPost(postDTO);
         post.setId(null);
@@ -91,14 +91,17 @@ public class PostService {
         post.setTitle(postDTO.title());
         post.setText(postDTO.text());
 
-        Post savedPost = postRepository.save(post);
-        log.info("Post with Id '{}' updated successfully.", savedPost.getId());
-        return postMapper.toDTO(savedPost);
+        Post updatedPost = postRepository.save(post);
+        log.info("Post with Id '{}' updated successfully.", updatedPost.getId());
+        return postMapper.toDTO(updatedPost);
     }
 
     @Transactional
     public void deletePostById(Long postId) {
 
+        if(postId == null) {
+            throw new IllegalArgumentException("Post deleteById failed: null postId");
+        }
         postRepository.deleteById(postId);
 
         log.info("Post with Id '{}' deleted successfully.", postId);

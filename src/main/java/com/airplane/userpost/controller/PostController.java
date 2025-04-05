@@ -29,7 +29,7 @@ public class PostController {
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/{postId}")
     public ResponseEntity<PostDTO> postById(@PathVariable Long postId) {
         log.info("Get Post request for Id {} received", postId);
 

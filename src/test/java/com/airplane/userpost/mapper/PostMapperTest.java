@@ -67,7 +67,7 @@ public class PostMapperTest {
     }
 
     @Test
-    public void shouldReturnMapperExceptionWhenDTOIsNull() {
+    public void shouldThrowMapperExceptionWhenDTOIsNull() {
 
         Exception exception = assertThrows(MapperException.class,
                 () -> postMapper.toPost(null));
