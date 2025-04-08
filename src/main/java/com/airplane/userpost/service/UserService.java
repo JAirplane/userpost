@@ -8,11 +8,13 @@ import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.stream.StreamSupport;
 
 @Slf4j
 @Service
+@Validated
 public class UserService {
 
     private final UserRepository userRepository;
@@ -60,7 +63,7 @@ public class UserService {
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO createNewUser(UserDTO userDTO) {
+    public UserDTO createNewUser(@Valid UserDTO userDTO) {
 
         if(userDTO == null) {
             throw new IllegalArgumentException("User creation failed: null DTO received");
@@ -79,7 +82,7 @@ public class UserService {
 
     //do not updates CreatedAt field
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO updateExistingUser(Long userId, UserDTO userDTO) {
+    public UserDTO updateExistingUser(Long userId, @Valid UserDTO userDTO) {
 
         if(userId == null || userDTO == null) {
             throw new IllegalArgumentException("User update failed: received null arg");

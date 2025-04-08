@@ -3,6 +3,7 @@ package com.airplane.userpost.controller;
 import com.airplane.userpost.dto.PostDTO;
 import com.airplane.userpost.service.PostService;
 import com.airplane.userpost.service.UserService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class PostController {
     }
 
     @PostMapping(path = "/{userId}")
-    public ResponseEntity<PostDTO> newPost(@PathVariable Long userId, @RequestBody PostDTO postDTO) {
+    public ResponseEntity<PostDTO> newPost(@PathVariable Long userId, @Valid @RequestBody PostDTO postDTO) {
         log.info("Create Post request for User Id {} received", userId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -45,7 +46,7 @@ public class PostController {
     }
 
     @PutMapping(path = "/{postId}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId, @RequestBody PostDTO postDTO) {
+    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId, @Valid @RequestBody PostDTO postDTO) {
         log.info("Update Post request for Id {} received", postId);
 
         return ResponseEntity.ok()

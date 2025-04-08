@@ -8,16 +8,19 @@ import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.stream.StreamSupport;
 
 @Slf4j
 @Service
+@Validated
 public class PostService {
 
     private final PostRepository postRepository;
@@ -57,7 +60,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostDTO createNewPost(Long userId, PostDTO postDTO) {
+    public PostDTO createNewPost(Long userId, @Valid PostDTO postDTO) {
 
         if(userId == null || postDTO == null || postDTO.title() == null) {
             throw new IllegalArgumentException("New Post creation failed: bad argument received.");
@@ -78,7 +81,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostDTO updateExistingPost(Long postId, PostDTO postDTO) {
+    public PostDTO updateExistingPost(Long postId, @Valid PostDTO postDTO) {
 
         if(postId == null || postDTO == null || postDTO.title() == null) {
             throw new IllegalArgumentException("Post update failed: bad argument received.");

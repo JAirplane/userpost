@@ -1,12 +1,12 @@
 package com.airplane.userpost.dto;
 
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public record PostDTO(Long id, String title, String text,
-        LocalDateTime createdAt, Long userId) {
+public record PostDTO(Long id, @NotBlank(message = "Blank post title.") String title,
+                      String text, LocalDateTime createdAt, Long userId) {
 
     @Override
     public boolean equals(Object obj) {

@@ -1,7 +1,8 @@
 package com.airplane.userpost.model;
 
-import com.airplane.userpost.dto.PostDTO;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Generated;
