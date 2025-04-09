@@ -8,14 +8,21 @@ import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
+import jakarta.validation.ConstraintViolationException;
+import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.validation.beanvalidation.MethodValidationInterceptor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
@@ -34,7 +41,18 @@ public class UserServiceTest {
         userMapper = Mockito.mock(UserMapper.class);
         postRepository = Mockito.mock(PostRepository.class);
         userRepository = Mockito.mock(UserRepository.class);
-        userService = new UserService(userRepository, postRepository, userMapper);
+        UserService service = new UserService(userRepository, postRepository, userMapper);
+
+        var validatorFactory = new LocalValidatorFactoryBean();
+        validatorFactory.afterPropertiesSet();
+
+        MethodInterceptor methodValidationInterceptor
+                = new MethodValidationInterceptor(validatorFactory.getValidator());
+
+        ProxyFactory proxyFactory = new ProxyFactory(service);
+        proxyFactory.addAdvice(methodValidationInterceptor);
+
+        userService = (UserService) proxyFactory.getProxy();
     }
 
     @Test
@@ -115,12 +133,18 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionUserById() {
+    public void shouldThrowConstraintViolationExceptionWhenGetUserByIdWithNullIdArg() {
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserById(null));
-
-        assertEquals("Getting User by Id failed: null Id received", exception.getMessage());
+		assertThatThrownBy(() -> userService.getUserById(null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId mustn't be null."));
+				});
     }
 
     @Test
@@ -137,14 +161,14 @@ public class UserServiceTest {
     @Test
     void shouldReturnCreatedNewUser() {
 
-        UserDTO userDTOArg = testUserDTO(null, "test name", "test mail");
+        UserDTO userDTOArg = testUserDTO(null, "test name", "example@mail.com");
 
-        User userFromMapper = testUser(null, "test name", "test mail");
-        User savedUser = testUser(1L, "test name", "test mail");
+        User userFromMapper = testUser(null, "test name", "example@mail.com");
+        User savedUser = testUser(1L, "test name", "example@mail.com");
 
-        UserDTO userDTOFromMapper = testUserDTO(1L, "test name", "test mail");
+        UserDTO userDTOFromMapper = testUserDTO(1L, "test name", "example@mail.com");
 
-        UserDTO expectedUserDTO = testUserDTO(1L, "test name", "test mail");
+        UserDTO expectedUserDTO = testUserDTO(1L, "test name", "example@mail.com");
 
         when(userMapper.toUser(userDTOArg)).thenReturn(userFromMapper);
         when(userRepository.save(userFromMapper)).thenReturn(savedUser);
@@ -154,42 +178,62 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenCreatingUser() {
+    public void shouldThrowConstraintViolationExceptionWhenUserDTOIsNull() {
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.createNewUser(null));
-
-        assertEquals("User creation failed: null DTO received", exception.getMessage());
+		assertThatThrownBy(() -> userService.createNewUser(null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userDTO") &&
+							v.getMessage().equals("UserDTO mustn't be null."));
+				});
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionBadFieldsWhenCreatingUser() {
+    public void shouldThrowConstraintViolationExceptionWhenCreatingUser_NullFields() {
 
-        UserDTO userDTOArg_withId = testUserDTO(1L, "test name", "test mail");
-        UserDTO userDTOArg_nullUsername = testUserDTO(null, null, "test mail");
-        UserDTO userDTOArg_nullEmail = testUserDTO(null, "test name", null);
+		UserDTO userDTOArg = testUserDTO(null, null, null);
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.createNewUser(userDTOArg_withId));
+		assertThatThrownBy(() -> userService.createNewUser(userDTOArg))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(2);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userName") &&
+							v.getMessage().equals("Username is empty."))
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("email") &&
+							v.getMessage().equals("Email is empty."));
+				});
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenCreatingUser_BadEmail() {
 
-        assertEquals("User creation failed: bad DTO field", exception.getMessage());
+		UserDTO userDTOArg = testUserDTO(null, "test name", "bad mail");
 
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.createNewUser(userDTOArg_nullUsername));
-
-        assertEquals("User creation failed: bad DTO field", exception.getMessage());
-
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.createNewUser(userDTOArg_nullEmail));
-
-        assertEquals("User creation failed: bad DTO field", exception.getMessage());
+		assertThatThrownBy(() -> userService.createNewUser(userDTOArg))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("email") &&
+							v.getMessage().equals("Invalid email format."));
+				});
     }
 
     @Test
     void shouldReturnUpdatedExistingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "changed name", "changed mail");
+        UserDTO userDTOArg = testUserDTO(null, "changed name", "changed@mail.com");
         PostDTO postDTO1 = testPostDTO(1L, "changed title1", "changed text1", null);
         PostDTO postDTO2 = testPostDTO(null, "test title2", "test text2", null);
         PostDTO postDTO3 = testPostDTO(null, "test title3", "test text3", null);
@@ -197,15 +241,15 @@ public class UserServiceTest {
         userDTOArg.addPost(postDTO2);
         userDTOArg.addPost(postDTO3);
 
-        User userFromDB = testUser(userIdArg, "test name", "test mail");
-        Post post = testPost(8L, "test title4", "test mail4");
+        User userFromDB = testUser(userIdArg, "test name", "example@mail.com");
+        Post post = testPost(8L, "test title4", "test text4");
         post.setUser(userFromDB);
         userFromDB.addPost(post);
 
-        Post existingPost = testPost(1L, "test title1", "test mail1");
+        Post existingPost = testPost(1L, "test title1", "test text1");
         existingPost.setUser(userFromDB);
 
-        User updatedUser = testUser(userIdArg, "changed name", "changed mail");
+        User updatedUser = testUser(userIdArg, "changed name", "changed@mail.com");
         Post post1 = testPost(1L, "changed title1", "changed text1");
         Post post2 = testPost(null, "test title2", "test text2");
         Post post3 = testPost(null, "test title3", "test text3");
@@ -217,7 +261,7 @@ public class UserServiceTest {
         updatedUser.addPost(post2);
         updatedUser.addPost(post3);
 
-        User savedUser = testUser(userIdArg, "changed name", "changed mail");
+        User savedUser = testUser(userIdArg, "changed name", "changed@mail.com");
         Post updatedPost1 = testPost(1L, "changed title1", "changed text1");
         Post savedPost2 = testPost(2L, "test title2", "test text2");
         Post savedPost3 = testPost(3L, "test title3", "test text3");
@@ -229,7 +273,7 @@ public class UserServiceTest {
         savedUser.addPost(savedPost2);
         savedUser.addPost(savedPost3);
 
-        UserDTO mappedUser = testUserDTO(userIdArg, "changed name", "changed mail");
+        UserDTO mappedUser = testUserDTO(userIdArg, "changed name", "changed@mail.com");
         PostDTO mappedPost1 = testPostDTO(1L, "changed title1", "changed text1", userIdArg);
         PostDTO mappedPost2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
         PostDTO mappedPost3 = testPostDTO(3L, "test title3", "test text3", userIdArg);
@@ -238,7 +282,7 @@ public class UserServiceTest {
         mappedUser.addPost(mappedPost2);
         mappedUser.addPost(mappedPost3);
 
-        UserDTO expectedUser = testUserDTO(userIdArg, "changed name", "changed mail");
+        UserDTO expectedUser = testUserDTO(userIdArg, "changed name", "changed@mail.com");
         PostDTO expectedPost1 = testPostDTO(1L, "changed title1", "changed text1", userIdArg);
         PostDTO expectedPost2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
         PostDTO expectedPost3 = testPostDTO(3L, "test title3", "test text3", userIdArg);
@@ -256,45 +300,69 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenUpdatingUser() {
-
-        Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "changed name", "changed mail");
-
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.updateExistingUser(null, userDTOArg));
-
-        assertEquals("User update failed: received null arg", exception.getMessage());
-
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.updateExistingUser(userIdArg, null));
-
-        assertEquals("User update failed: received null arg", exception.getMessage());
+    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_NullArgs() {
+		
+		assertThatThrownBy(() -> userService.updateExistingUser(null, null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(2);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId mustn't be null."))
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userDTO") &&
+							v.getMessage().equals("UserDTO mustn't be null."));
+				});
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenUpdatingUser_BadFields() {
+    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_BadFields() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg_nullUsername = testUserDTO(null, null, "changed mail");
-        UserDTO userDTOArg_nullEmail = testUserDTO(null, "test username", null);
+        UserDTO userDTOArg = testUserDTO(null, null, "changed mail");
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.updateExistingUser(userIdArg, userDTOArg_nullUsername));
+		assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(2);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userName") &&
+							v.getMessage().equals("Username is empty."))
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("email") &&
+							v.getMessage().equals("Invalid email format."));
+				});
+    }
 
-        assertEquals("User creation failed: bad DTO field", exception.getMessage());
+    @Test
+    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_BadPostField() {
 
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.updateExistingUser(userIdArg, userDTOArg_nullEmail));
+        Long userIdArg = 1L;
+        UserDTO userDTOArg = testUserDTO(null, "username", "example@mail.com");
+        PostDTO badPost = testPostDTO(null, null, "text", userIdArg);
+        userDTOArg.addPost(badPost);
 
-        assertEquals("User creation failed: bad DTO field", exception.getMessage());
+        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+                .isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+                    var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+                    assertThat(violations).hasSize(1);
+                    assertThat(violations)
+                            .anyMatch(v ->
+                                    v.getPropertyPath().toString().contains("title") &&
+                                            v.getMessage().equals("Blank post title."));
+                });
     }
 
     @Test
     public void shouldThrowUserNotFoundExceptionWhenUpdatingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "test name", "changed mail");
+        UserDTO userDTOArg = testUserDTO(null, "test name", "example@mail.com");
 
         Exception exception = assertThrows(UserNotFoundException.class,
                 () -> userService.updateExistingUser(userIdArg, userDTOArg));
@@ -304,11 +372,26 @@ public class UserServiceTest {
     }
 
     @Test
-    void deleteUser() {
+    public void deleteUser() {
 
         userService.deleteUser(1L);
 
         verify(userRepository).deleteById(1L);
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenDeleteUserWithNullIdArg() {
+
+		assertThatThrownBy(() -> userService.deleteUser(null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId mustn't be null."));
+				});
     }
 
     private Post testPost(Long id, String title, String text) {

@@ -138,8 +138,9 @@ public class UserControllerTest {
 
     @Test
     public void shouldReturnCreatedUser() throws Exception {
-        UserDTO user1 = testUserDTO(null, "test name1", "test mail1");
+        UserDTO user1 = testUserDTO(null, "test name1", "example@mail.com");
 
+        //Posts won't be saved with new user
         PostDTO post1 = testPostDTO(null, "title1", "text1", null);
         PostDTO post2 = testPostDTO(null, "title2", "text2", null);
 
@@ -154,18 +155,12 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.userName").value(user1.getUserName()))
                 .andExpect(jsonPath("$.email").value(user1.getEmail()))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
-                .andExpect(jsonPath("$.posts[*].id").isNotEmpty())
-                .andExpect(jsonPath("$.posts[*].createdAt").isNotEmpty())
-                .andExpect(jsonPath("$.posts[*].userId").isNotEmpty())
-                    .andExpect(jsonPath("$.posts[*].title", hasItem("title1")))
-                    .andExpect(jsonPath("$.posts[*].text", hasItem("text1")))
-                    .andExpect(jsonPath("$.posts[*].title", hasItem("title2")))
-                    .andExpect(jsonPath("$.posts[*].text", hasItem("text2")));
+                .andExpect(jsonPath("$.posts[*]").isEmpty());
     }
 
     @Test
     public void shouldReturnUpdatedUser() throws Exception {
-        User user = testUser(null, "test name1", "test mail1");
+        User user = testUser(null, "test name1", "example@mail.com");
         User savedUser = userRepository.save(user);
 
         Post post1 = testPost(null, "title1", "text1");
@@ -179,7 +174,7 @@ public class UserControllerTest {
         Post savedPost1 = postRepository.save(post1);
         Post savedPost2 = postRepository.save(post2);
 
-        UserDTO userArg = testUserDTO(null, "changed name1", "changed mail1");
+        UserDTO userArg = testUserDTO(null, "changed name1", "changed@mail.com");
 
         PostDTO post1Arg = testPostDTO(savedPost1.getId(), "changed title1", "changed text1", savedUser.getId());
         PostDTO post3 = testPostDTO(null, "title3", "text3", savedUser.getId());

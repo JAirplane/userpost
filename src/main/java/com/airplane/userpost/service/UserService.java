@@ -9,6 +9,7 @@ import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,85 +50,73 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserDTO getUserById(Long userId) {
-
-        if(userId == null) {
-            throw new IllegalArgumentException("Getting User by Id failed: null Id received");
-        }
+    public UserDTO getUserById(@NotNull(message = "UserId mustn't be null.") Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with Id: " + userId));
 
-        log.info("User with Id {} received.", userId);
+        log.info("User with Id '{}' received.", userId);
+		
         return userMapper.toDTO(user);
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO createNewUser(@Valid UserDTO userDTO) {
-
-        if(userDTO == null) {
-            throw new IllegalArgumentException("User creation failed: null DTO received");
-        }
-
-        if(userDTO.getUserName() == null || userDTO.getEmail() == null || userDTO.getId() != null) {
-            throw new IllegalArgumentException("User creation failed: bad DTO field");
-        }
-
+    public UserDTO createNewUser(@NotNull(message = "UserDTO mustn't be null.") @Valid UserDTO userDTO) {
+		
+		//Post creation is not allowed here
+		userDTO.getPosts().clear();
+		
         User newUser = userMapper.toUser(userDTO);
+        newUser.setId(null);
+
         User savedUser = userRepository.save(newUser);
-        log.info("New user with id {} created.", savedUser.getId());
+		
+        log.info("New user with Id '{}' created.", savedUser.getId());
 
         return userMapper.toDTO(savedUser);
     }
 
     //do not updates CreatedAt field
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO updateExistingUser(Long userId, @Valid UserDTO userDTO) {
-
-        if(userId == null || userDTO == null) {
-            throw new IllegalArgumentException("User update failed: received null arg");
-        }
-
-        if(userDTO.getUserName() == null || userDTO.getEmail() == null) {
-            throw new IllegalArgumentException("User creation failed: bad DTO field");
-        }
+    public UserDTO updateExistingUser(@NotNull(message = "UserId mustn't be null.") Long userId,
+			@NotNull(message = "UserDTO mustn't be null.") @Valid UserDTO userDTO) {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User update failed: user not found with Id: " + userId));
 
         existingUser.setUserName(userDTO.getUserName());
-        log.info("User id: {}. Username updated.", existingUser.getId());
+        log.info("User with Id {}. Username updated.", existingUser.getId());
 
         existingUser.setEmail(userDTO.getEmail());
-        log.info("User id: {}. Email updated.", existingUser.getId());
+        log.info("User with Id '{}'. Email updated.", existingUser.getId());
 
         Set<Post> posts = existingUser.getPosts();
         posts.clear();
         for(PostDTO postDTO: userDTO.getPosts()) {
-            if(postDTO.title() != null) {
-                Post post = null;
-                if(postDTO.id() == null) {
-                    post = new Post();
-                }
-                else {
-                    post = postRepository.findById(postDTO.id()).orElse(new Post());
-                }
-                post.setTitle(postDTO.title());
-                post.setText(postDTO.text());
-                post.setUser(existingUser);
-                posts.add(post);
-            }
+			Post post = null;
+			if(postDTO.id() == null) {
+				post = new Post();
+			}
+			else {
+				post = postRepository.findById(postDTO.id()).orElse(new Post());
+			}
+			post.setTitle(postDTO.title());
+			post.setText(postDTO.text());
+			post.setUser(existingUser);
+			posts.add(post);
         }
 
         //update user
         User savedUser = userRepository.save(existingUser);
-        log.info("User id: {}. Updated successfully.", existingUser.getId());
+        log.info("User with Id '{}' updated successfully.", existingUser.getId());
         return userMapper.toDTO(savedUser);
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
-        log.info("User id: {}. Deleted.", userId);
+    public void deleteUser(@NotNull(message = "UserId mustn't be null.") Long userId) {
+        
         userRepository.deleteById(userId);
+		
+		log.info("User with Id '{}' deleted.", userId);
     }
 }

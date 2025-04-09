@@ -2,7 +2,6 @@ package com.airplane.userpost.controller;
 
 import com.airplane.userpost.dto.PostDTO;
 import com.airplane.userpost.service.PostService;
-import com.airplane.userpost.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

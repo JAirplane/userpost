@@ -9,6 +9,7 @@ import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,29 +46,22 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostDTO getPostById(Long postId) {
-
-        if(postId == null) {
-            throw new IllegalArgumentException("Getting Post by Id failed: null postId received");
-        }
+    public PostDTO getPostById(@NotNull(message = "PostId mustn't be null.") Long postId) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with Id: " + postId));
+                .orElseThrow(() -> new PostNotFoundException("Post not found for Id: " + postId));
 
-        log.info("Post with Id '{}' received from DB", post.getId());
+        log.info("Post with Id '{}' found.", post.getId());
 
         return postMapper.toDTO(post);
     }
 
     @Transactional
-    public PostDTO createNewPost(Long userId, @Valid PostDTO postDTO) {
-
-        if(userId == null || postDTO == null || postDTO.title() == null) {
-            throw new IllegalArgumentException("New Post creation failed: bad argument received.");
-        }
+    public PostDTO createNewPost(@NotNull(message = "UserId mustn't be null.") Long userId,
+			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found on DB with Id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException("User not found for Id: " + userId));
 
         Post post = postMapper.toPost(postDTO);
         post.setId(null);
@@ -81,32 +75,26 @@ public class PostService {
     }
 
     @Transactional
-    public PostDTO updateExistingPost(Long postId, @Valid PostDTO postDTO) {
-
-        if(postId == null || postDTO == null || postDTO.title() == null) {
-            throw new IllegalArgumentException("Post update failed: bad argument received.");
-        }
+    public PostDTO updateExistingPost(@NotNull(message = "PostId mustn't be null.") Long postId,
+			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new PostNotFoundException("Post wasn't found in DB for Id: " + postId));
+                .orElseThrow(() -> new PostNotFoundException("Post wasn't found for Id: " + postId));
 
         //no need to update user, id and createdAt fields
         post.setTitle(postDTO.title());
         post.setText(postDTO.text());
 
         Post updatedPost = postRepository.save(post);
-        log.info("Post with Id '{}' updated successfully.", updatedPost.getId());
+        log.info("Post with Id '{}' updated.", updatedPost.getId());
         return postMapper.toDTO(updatedPost);
     }
 
     @Transactional
-    public void deletePostById(Long postId) {
+    public void deletePostById(@NotNull(message = "PostId mustn't be null.") Long postId) {
 
-        if(postId == null) {
-            throw new IllegalArgumentException("Post deleteById failed: null postId");
-        }
         postRepository.deleteById(postId);
 
-        log.info("Post with Id '{}' deleted successfully.", postId);
+        log.info("Post with Id '{}' deleted.", postId);
     }
 }

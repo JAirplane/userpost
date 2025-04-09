@@ -95,8 +95,26 @@ public class PostControllerTest {
     }
 
     @Test
+    public void shouldReturnNotFound_PostById() throws Exception {
+
+        mockMvc.perform(get("/posts/{id}", -1L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.Error").value("Post not found for Id: -1"));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_PostById() throws Exception {
+
+        mockMvc.perform(get("/posts/abc")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error").value("Invalid ID format: abc"));
+    }
+
+    @Test
     public void shouldReturnCreatedPostDTO() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "test mail"));
+        User user = userRepository.save(testUser(null, "test name", "example@mail.com"));
         PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
 
         mockMvc.perform(post("/posts/{userId}", user.getId())
@@ -111,8 +129,42 @@ public class PostControllerTest {
     }
 
     @Test
+    public void shouldReturnBadRequest_CreateNewPost_BadArgs() throws Exception {
+        PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
+
+        mockMvc.perform(post("/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title")
+                        .value("Blank post title."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_CreateNewPost_NullPostArg() throws Exception {
+
+        mockMvc.perform(post("/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Request body is null."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_CreateNewPost_BadUserId() throws Exception {
+
+        mockMvc.perform(post("/posts/abc")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Invalid ID format: abc"));
+    }
+
+    @Test
     public void shouldReturnUpdatedPostDTO() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "test mail"));
+        User user = userRepository.save(testUser(null, "test name", "example@mail.com"));
         Post post = testPost(null, "test title", "test text");
         post.setUser(user);
         Post savedPost = postRepository.save(post);
@@ -130,6 +182,41 @@ public class PostControllerTest {
     }
 
     @Test
+    public void shouldReturnBadRequest_UpdatePost_NullPostArg() throws Exception {
+
+        mockMvc.perform(put("/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Request body is null."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_UpdatePost_BadArgs() throws Exception {
+        PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
+
+        mockMvc.perform(put("/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title")
+                        .value("Blank post title."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_UpdatePost_BadPostId() throws Exception {
+        PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
+
+        mockMvc.perform(put("/posts/abc")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Invalid ID format: abc"));
+    }
+
+    @Test
     public void shouldDeletePost() throws Exception {
         User user = userRepository.save(testUser(null, "test name", "test mail"));
         Post post = testPost(null, "test title", "test text");
@@ -142,6 +229,16 @@ public class PostControllerTest {
         boolean isPostStillThere = postRepository.findById(savedPost.getId()).isPresent();
 
         assertFalse(isPostStillThere);
+    }
+
+    @Test
+    public void shouldReturnBadRequest_DeletePost_BadPostId() throws Exception {
+
+        mockMvc.perform(delete("/posts/abc")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Invalid ID format: abc"));
     }
 
     private User testUser(Long userId, String username, String email) {

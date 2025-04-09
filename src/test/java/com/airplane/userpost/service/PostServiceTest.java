@@ -8,14 +8,21 @@ import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
+import jakarta.validation.ConstraintViolationException;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.springframework.aop.framework.ProxyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.validation.beanvalidation.MethodValidationInterceptor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -32,7 +39,18 @@ public class PostServiceTest {
         postMapper = Mockito.mock(PostMapper.class);
         postRepository = Mockito.mock(PostRepository.class);
         userRepository = Mockito.mock(UserRepository.class);
-        postService = new PostService(postRepository, userRepository, postMapper);
+        PostService service = new PostService(postRepository, userRepository, postMapper);
+
+        var validatorFactory = new LocalValidatorFactoryBean();
+        validatorFactory.afterPropertiesSet();
+
+        MethodInterceptor methodValidationInterceptor
+                = new MethodValidationInterceptor(validatorFactory.getValidator());
+
+        ProxyFactory proxyFactory = new ProxyFactory(service);
+        proxyFactory.addAdvice(methodValidationInterceptor);
+
+        postService = (PostService) proxyFactory.getProxy();
     }
 
     @Test
@@ -91,11 +109,18 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenPostIdIsNull() {
+    public void shouldThrowConstraintViolationExceptionWhenPostIdIsNull() {
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.getPostById(null));
-        assertEquals("Getting Post by Id failed: null postId received", exception.getMessage());
+        assertThatThrownBy(() -> postService.getPostById(null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId mustn't be null."));
+				});
     }
 
     @Test
@@ -105,7 +130,7 @@ public class PostServiceTest {
         Exception exception = assertThrows(PostNotFoundException.class,
                 () -> postService.getPostById(100L));
 
-        assertEquals("Post not found with Id: 100", exception.getMessage());
+        assertEquals("Post not found for Id: 100", exception.getMessage());
     }
 
     @Test
@@ -136,26 +161,39 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenCreatingNewPost() {
+    public void shouldThrowConstraintViolationExceptionWhenNullArguments() {
 
-        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+		assertThatThrownBy(() -> postService.createNewPost(null, null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(2);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId mustn't be null."))
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postDTO") &&
+							v.getMessage().equals("PostDTO mustn't be null."));
+				});
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenDtoNotValid() {
+
         PostDTO postDTOArgNullTitle = testPostDTO(11L, null, "some text", null);
         Long userIdArg = 1L;
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.createNewPost(null, postDTOArg));
-
-        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
-
-        exception= assertThrows(IllegalArgumentException.class,
-                () -> postService.createNewPost(userIdArg, null));
-
-        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
-
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.createNewPost(userIdArg, postDTOArgNullTitle));
-
-        assertEquals("New Post creation failed: bad argument received.", exception.getMessage());
+		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDTOArgNullTitle))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("title") &&
+							v.getMessage().equals("Blank post title."));
+				});
     }
 
     @Test
@@ -169,7 +207,7 @@ public class PostServiceTest {
         Exception exception = assertThrows(UserNotFoundException.class,
                 () -> postService.createNewPost(userIdArg, postDTOArg));
 
-        assertEquals("User not found on DB with Id: 1", exception.getMessage());
+        assertEquals("User not found for Id: 1", exception.getMessage());
     }
 
     @Test
@@ -201,26 +239,39 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenUpdateExistingPost() {
+    public void shouldThrowConstraintViolationExceptionWhenUpdateExistingPostWithNullArgs() {
 
-        PostDTO postDTOArg = testPostDTO(null, "test title", "some text", 2L);
+		assertThatThrownBy(() -> postService.updateExistingPost(null, null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(2);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId mustn't be null."))
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postDTO") &&
+							v.getMessage().equals("PostDTO mustn't be null."));
+				});
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenUpdateExistingPostWithDTONotValid() {
+
         PostDTO postDTOArgNullTitle = testPostDTO(null, null, "some text", 2L);
         Long postIdArg = 1L;
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.updateExistingPost(null, postDTOArg));
-
-        assertEquals("Post update failed: bad argument received.", exception.getMessage());
-
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.updateExistingPost(postIdArg, null));
-
-        assertEquals("Post update failed: bad argument received.", exception.getMessage());
-
-        exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.updateExistingPost(postIdArg, postDTOArgNullTitle));
-
-        assertEquals("Post update failed: bad argument received.", exception.getMessage());
+		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDTOArgNullTitle))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("title") &&
+							v.getMessage().equals("Blank post title."));
+				});
     }
 
     @Test
@@ -234,7 +285,7 @@ public class PostServiceTest {
         Exception exception = assertThrows(PostNotFoundException.class,
                 () -> postService.updateExistingPost(postIdArg, postDTOArg));
 
-        assertEquals("Post wasn't found in DB for Id: 1", exception.getMessage());
+        assertEquals("Post wasn't found for Id: 1", exception.getMessage());
     }
 
     @Test
@@ -245,12 +296,18 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenDeletePost() {
+    public void shouldThrowConstraintViolationExceptionWhenDeletePostWithNullIdArg() {
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> postService.deletePostById(null));
-
-        assertEquals("Post deleteById failed: null postId", exception.getMessage());
+		assertThatThrownBy(() -> postService.deletePostById(null))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId mustn't be null."));
+				});
     }
 
     private Post testPost(Long id, String title, String text) {

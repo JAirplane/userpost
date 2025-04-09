@@ -25,7 +25,6 @@ public class Post {
     @Column
     private String text;
 
-    @EqualsAndHashCode.Exclude
     @Column(name = "created_at", insertable = false, updatable = false)
     @Generated
     private LocalDateTime createdAt;
