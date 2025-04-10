@@ -133,7 +133,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenGetUserByIdWithNullIdArg() {
+    public void shouldThrowConstraintViolationException_NullArg_getUserById() {
 
 		assertThatThrownBy(() -> userService.getUserById(null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -146,9 +146,24 @@ public class UserServiceTest {
 							v.getMessage().equals("UserId mustn't be null."));
 				});
     }
+	
+	@Test
+    public void shouldThrowConstraintViolationException_UserIdNotPositive_getUserById() {
+
+		assertThatThrownBy(() -> userService.getUserById(0L))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId must be positive number."));
+				});
+    }
 
     @Test
-    public void shouldThrowUserNotFoundExceptionUserById() {
+    public void shouldThrowUserNotFoundException_getUserById() {
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -178,7 +193,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenUserDTOIsNull() {
+    public void shouldThrowConstraintViolationException_NullUserArg_createNewUser() {
 
 		assertThatThrownBy(() -> userService.createNewUser(null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -193,7 +208,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenCreatingUser_NullFields() {
+    public void shouldThrowConstraintViolationException_NullUserDTOFields_createNewUser() {
 
 		UserDTO userDTOArg = testUserDTO(null, null, null);
 
@@ -213,7 +228,7 @@ public class UserServiceTest {
     }
 	
 	@Test
-    public void shouldThrowConstraintViolationExceptionWhenCreatingUser_BadEmail() {
+    public void shouldThrowConstraintViolationException_BadEmail_createNewUser() {
 
 		UserDTO userDTOArg = testUserDTO(null, "test name", "bad mail");
 
@@ -300,7 +315,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_NullArgs() {
+    public void shouldThrowConstraintViolationException_NullArgs_updateExistingUser() {
 		
 		assertThatThrownBy(() -> userService.updateExistingUser(null, null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -318,7 +333,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_BadFields() {
+    public void shouldThrowConstraintViolationException_BadUserDTOFields_updateExistingUser() {
 
         Long userIdArg = 1L;
         UserDTO userDTOArg = testUserDTO(null, null, "changed mail");
@@ -339,7 +354,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenUpdatingUser_BadPostField() {
+    public void shouldThrowConstraintViolation_BadPostField_updateExistingUser() {
 
         Long userIdArg = 1L;
         UserDTO userDTOArg = testUserDTO(null, "username", "example@mail.com");
@@ -357,9 +372,29 @@ public class UserServiceTest {
                                             v.getMessage().equals("Blank post title."));
                 });
     }
+	
+	@Test
+    public void shouldThrowConstraintViolation_UserIdNotPositive_updateExistingUser() {
+
+        Long userIdArg = -1L;
+        UserDTO userDTOArg = testUserDTO(null, "username", "example@mail.com");
+        PostDTO post = testPostDTO(null, "title", "text", userIdArg);
+        userDTOArg.addPost(post);
+
+        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+                .isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+                    var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+                    assertThat(violations).hasSize(1);
+                    assertThat(violations)
+                            .anyMatch(v ->
+                                    v.getPropertyPath().toString().contains("userId") &&
+                                            v.getMessage().equals("UserId must be positive number."));
+                });
+    }
 
     @Test
-    public void shouldThrowUserNotFoundExceptionWhenUpdatingUser() {
+    public void shouldThrowUserNotFoundException_updateExistingUser() {
 
         Long userIdArg = 1L;
         UserDTO userDTOArg = testUserDTO(null, "test name", "example@mail.com");
@@ -367,7 +402,7 @@ public class UserServiceTest {
         Exception exception = assertThrows(UserNotFoundException.class,
                 () -> userService.updateExistingUser(userIdArg, userDTOArg));
 
-        assertEquals("User update failed: user not found with Id: 1", exception.getMessage());
+        assertEquals("User not found with Id: 1", exception.getMessage());
 
     }
 
@@ -380,7 +415,7 @@ public class UserServiceTest {
     }
 	
 	@Test
-    public void shouldThrowConstraintViolationExceptionWhenDeleteUserWithNullIdArg() {
+    public void shouldThrowConstraintViolationException_NullUserIdArg_deleteUser() {
 
 		assertThatThrownBy(() -> userService.deleteUser(null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -391,6 +426,21 @@ public class UserServiceTest {
 						.anyMatch(v -> 
 							v.getPropertyPath().toString().contains("userId") &&
 							v.getMessage().equals("UserId mustn't be null."));
+				});
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationException_UserIdNotPositive_deleteUser() {
+
+		assertThatThrownBy(() -> userService.deleteUser(-1L))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId must be positive number."));
 				});
     }
 

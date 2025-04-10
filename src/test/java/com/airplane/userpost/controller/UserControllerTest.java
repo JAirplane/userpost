@@ -7,6 +7,8 @@ import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +18,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.util.stream.StreamSupport;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,6 +36,9 @@ import java.time.LocalDateTime;
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
 })
 public class UserControllerTest {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private PostRepository postRepository;
@@ -135,6 +142,33 @@ public class UserControllerTest {
                     .andExpect(jsonPath("$.posts[*].title", hasItem("title2")))
                     .andExpect(jsonPath("$.posts[*].text", hasItem("text2")));
     }
+	
+	@Test
+    public void shouldReturnNotFound_userById() throws Exception {
+
+        mockMvc.perform(get("/users/10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.Error").value("User not found with Id: 10"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_InvalidPathVariable_userById() throws Exception {
+
+        mockMvc.perform(get("/users/abc")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error").value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_UserIdNotPositive_userById() throws Exception {
+
+        mockMvc.perform(get("/users/-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
+    }
 
     @Test
     public void shouldReturnCreatedUser() throws Exception {
@@ -156,6 +190,59 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.email").value(user1.getEmail()))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.posts[*]").isEmpty());
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_NullUserDTOFields_newUser() throws Exception {
+        UserDTO userDTOArg = testUserDTO(null, null, null);
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userName").value("Username is empty."))
+				.andExpect(jsonPath("$.email").value("Email is empty."));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_BadEmail_newUser() throws Exception {
+        UserDTO userDTOArg = testUserDTO(null, "test username", "bad email");
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.email").value("Invalid email format."));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_NullUserDTO_newUser() throws Exception {
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Request body is null."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_DuplicateFields_newUser() throws Exception {
+
+        UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userName").value("test username"))
+                .andExpect(jsonPath("$.email").value("example@mail.com"));
+
+        UserDTO userDTOArg2 = testUserDTO(null, "test username", "example@mail.com");
+        mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userDTOArg2)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.Error").value("Unique index or primary key violation."));
     }
 
     @Test
@@ -198,6 +285,113 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.posts[*].title", hasItem("title3")))
                 .andExpect(jsonPath("$.posts[*].text", hasItem("text3")));
     }
+	
+	@Test
+    public void shouldReturnBadRequest_NullUserDTOFields_updateUser() throws Exception {
+		
+        UserDTO userDTOArg = testUserDTO(null, null, null);
+
+        mockMvc.perform(put("/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userName").value("Username is empty."))
+				.andExpect(jsonPath("$.email").value("Email is empty."));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_BadEmail_updateUser() throws Exception {
+		
+        UserDTO userDTOArg = testUserDTO(null, "test username", "bad email");
+
+        mockMvc.perform(put("/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.email").value("Invalid email format."));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_NullUserDTO_updateUser() throws Exception {
+
+        mockMvc.perform(put("/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error")
+                        .value("Request body is null."));
+    }
+	
+	@Test
+    public void shouldReturnNotFound_updateUser() throws Exception {
+		
+		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		
+        mockMvc.perform(put("/users/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.Error").value("User not found with Id: 10"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_InvalidPathVariable_updateUser() throws Exception {
+		
+		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		
+        mockMvc.perform(put("/users/abc")
+                        .contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error").value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_UserIdNotPositive_updateUser() throws Exception {
+		
+		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		
+        mockMvc.perform(put("/users/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
+    }
+
+    @Test
+    public void shouldReturnBadRequest_DuplicateFields_updateUser() throws Exception {
+
+        UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userName").value("test username"))
+                .andExpect(jsonPath("$.email").value("example@mail.com"));
+
+        UserDTO userDTOArg2 = testUserDTO(null, "other username", "other@mail.com");
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArg2)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userName").value("other username"))
+                .andExpect(jsonPath("$.email").value("other@mail.com"));
+
+        var users = userRepository.findAll();
+        User user = StreamSupport.stream(users.spliterator(), false)
+                .filter(u -> u.getUserName().equals("other username"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(user);
+
+        UserDTO userDTOArgDuplicate = testUserDTO(null, "test username", "example@mail.com");
+        mockMvc.perform(put("/users/{id}", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTOArgDuplicate)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.Error").value("Unique index or primary key violation."));
+    }
 
     @Test
     public void shouldDeleteUser() throws Exception {
@@ -226,6 +420,24 @@ public class UserControllerTest {
 
         boolean isPost2InDB = postRepository.existsById(savedPost2.getId());
         assertFalse(isPost2InDB);
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_InvalidPathVariable_deleteUser() throws Exception {
+		
+        mockMvc.perform(delete("/users/abc")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.Error").value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_UserIdNotPositive_deleteUser() throws Exception {
+		
+        mockMvc.perform(delete("/users/-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
     }
 
     private User testUser(Long userId, String username, String email) {

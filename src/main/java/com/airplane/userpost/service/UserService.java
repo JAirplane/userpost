@@ -10,6 +10,7 @@ import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserDTO getUserById(@NotNull(message = "UserId mustn't be null.") Long userId) {
+    public UserDTO getUserById(@NotNull(message = "UserId mustn't be null.")
+							@Positive(message = "UserId must be positive number.") Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with Id: " + userId));
@@ -78,11 +80,12 @@ public class UserService {
 
     //do not updates CreatedAt field
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO updateExistingUser(@NotNull(message = "UserId mustn't be null.") Long userId,
+    public UserDTO updateExistingUser(@NotNull(message = "UserId mustn't be null.")
+									@Positive(message = "UserId must be positive number.") Long userId,
 			@NotNull(message = "UserDTO mustn't be null.") @Valid UserDTO userDTO) {
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User update failed: user not found with Id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException("User not found with Id: " + userId));
 
         existingUser.setUserName(userDTO.getUserName());
         log.info("User with Id {}. Username updated.", existingUser.getId());
@@ -113,7 +116,8 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(@NotNull(message = "UserId mustn't be null.") Long userId) {
+    public void deleteUser(@NotNull(message = "UserId mustn't be null.")
+						@Positive(message = "UserId must be positive number.") Long userId) {
         
         userRepository.deleteById(userId);
 		

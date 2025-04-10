@@ -10,6 +10,7 @@ import com.airplane.userpost.repository.PostRepository;
 import com.airplane.userpost.repository.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,8 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostDTO getPostById(@NotNull(message = "PostId mustn't be null.") Long postId) {
+    public PostDTO getPostById(@NotNull(message = "PostId mustn't be null.")
+								@Positive(message = "PostId must be positive number.") Long postId) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("Post not found for Id: " + postId));
@@ -57,7 +59,8 @@ public class PostService {
     }
 
     @Transactional
-    public PostDTO createNewPost(@NotNull(message = "UserId mustn't be null.") Long userId,
+    public PostDTO createNewPost(@NotNull(message = "UserId mustn't be null.")
+								@Positive(message = "UserId must be positive number.") Long userId,
 			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
 
         User user = userRepository.findById(userId)
@@ -75,7 +78,8 @@ public class PostService {
     }
 
     @Transactional
-    public PostDTO updateExistingPost(@NotNull(message = "PostId mustn't be null.") Long postId,
+    public PostDTO updateExistingPost(@NotNull(message = "PostId mustn't be null.")
+									@Positive(message = "PostId must be positive number.") Long postId,
 			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
 
         Post post = postRepository.findById(postId)
@@ -91,7 +95,8 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePostById(@NotNull(message = "PostId mustn't be null.") Long postId) {
+    public void deletePostById(@NotNull(message = "PostId mustn't be null.")
+							@Positive(message = "PostId must be positive number.") Long postId) {
 
         postRepository.deleteById(postId);
 

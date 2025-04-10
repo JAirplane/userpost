@@ -38,7 +38,8 @@ public class GlobalExceptionHandler {
         exception.getConstraintViolations()
                 .forEach(constraintViolation -> {
                     String path = constraintViolation.getPropertyPath().toString();
-                    errors.put(path, constraintViolation.getMessage());
+                    String[] paths = path.split("\\.");
+                    errors.put(paths[paths.length - 1], constraintViolation.getMessage());
                 });
 
 		log.error("Validation errors found in Service: {}", errors.size());
@@ -71,18 +72,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
         log.error(exception.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("Error", exception.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("Error", "Unique index or primary key violation."));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, String>> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+    public ResponseEntity<Map<String, String>> handleTypeMismatchException(MethodArgumentTypeMismatchException exception) {
+        log.error(exception.getMessage());
         return ResponseEntity.badRequest()
-                .body(Map.of("Error", "Invalid ID format: " + ex.getValue()));
+                .body(Map.of("Error", "Invalid format: " + exception.getValue()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleEmptyRequestBody(HttpMessageNotReadableException ex) {
+    public ResponseEntity<Map<String, String>> handleEmptyRequestBody(HttpMessageNotReadableException exception) {
+        log.error(exception.getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(Map.of("Error", "Request body is null."));

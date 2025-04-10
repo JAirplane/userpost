@@ -97,19 +97,28 @@ public class PostControllerTest {
     @Test
     public void shouldReturnNotFound_PostById() throws Exception {
 
-        mockMvc.perform(get("/posts/{id}", -1L)
+        mockMvc.perform(get("/posts/10")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.Error").value("Post not found for Id: -1"));
+                .andExpect(jsonPath("$.Error").value("Post not found for Id: 10"));
     }
 
     @Test
-    public void shouldReturnBadRequest_PostById() throws Exception {
+    public void shouldReturnBadRequest_InvalidPathVariable_PostById() throws Exception {
 
         mockMvc.perform(get("/posts/abc")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.Error").value("Invalid ID format: abc"));
+                .andExpect(jsonPath("$.Error").value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_NotPositivePathVariable_PostById() throws Exception {
+
+        mockMvc.perform(get("/posts/-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.postId").value("PostId must be positive number."));
     }
 
     @Test
@@ -129,7 +138,7 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_CreateNewPost_BadArgs() throws Exception {
+    public void shouldReturnBadRequest_BadArgs_newPost() throws Exception {
         PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
 
         mockMvc.perform(post("/posts/1")
@@ -141,7 +150,7 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_CreateNewPost_NullPostArg() throws Exception {
+    public void shouldReturnBadRequest_NullPostArg_newPost() throws Exception {
 
         mockMvc.perform(post("/posts/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,14 +161,26 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_CreateNewPost_BadUserId() throws Exception {
+    public void shouldReturnBadRequest_BadUserId_newPost() throws Exception {
 
         mockMvc.perform(post("/posts/abc")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.Error")
-                        .value("Invalid ID format: abc"));
+                        .value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_UserIdNotPositive_newPost() throws Exception {
+		
+		PostDTO postDTOArg = testPostDTO(null, "some title", "test text", null);
+		
+        mockMvc.perform(post("/posts/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
     }
 
     @Test
@@ -182,7 +203,7 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_UpdatePost_NullPostArg() throws Exception {
+    public void shouldReturnBadRequest_NullPostArg_updatePost() throws Exception {
 
         mockMvc.perform(put("/posts/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -193,7 +214,7 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_UpdatePost_BadArgs() throws Exception {
+    public void shouldReturnBadRequest_BadArgs_updatePost() throws Exception {
         PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
 
         mockMvc.perform(put("/posts/1")
@@ -205,7 +226,7 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequest_UpdatePost_BadPostId() throws Exception {
+    public void shouldReturnBadRequest_BadPostId_updatePost() throws Exception {
         PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
 
         mockMvc.perform(put("/posts/abc")
@@ -213,7 +234,18 @@ public class PostControllerTest {
                         .content(objectMapper.writeValueAsString(postDTOArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.Error")
-                        .value("Invalid ID format: abc"));
+                        .value("Invalid format: abc"));
+    }
+	
+	@Test
+    public void shouldReturnBadRequest_NotPositivePostId_updatePost() throws Exception {
+        PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
+
+        mockMvc.perform(put("/posts/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.postId").value("PostId must be positive number."));
     }
 
     @Test
@@ -230,15 +262,24 @@ public class PostControllerTest {
 
         assertFalse(isPostStillThere);
     }
+	
+	@Test
+    public void shouldReturnBadRequest_NotPositivePostId_deletePost() throws Exception {
+
+        mockMvc.perform(delete("/posts/0")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.postId").value("PostId must be positive number."));
+    }
 
     @Test
-    public void shouldReturnBadRequest_DeletePost_BadPostId() throws Exception {
+    public void shouldReturnBadRequest_BadPostId_deletePost() throws Exception {
 
         mockMvc.perform(delete("/posts/abc")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.Error")
-                        .value("Invalid ID format: abc"));
+                        .value("Invalid format: abc"));
     }
 
     private User testUser(Long userId, String username, String email) {

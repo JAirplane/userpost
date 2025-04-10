@@ -92,11 +92,11 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldReturnPostById() {
+    public void shouldReturnPostDTO_getPostById() {
         PostDTO expectedPost = testPostDTO(1L, "title1", "text1", 1L);
 
         Post post = testPost(1L, "title1", "text1");
-        User user = testUser(1L, "testname1", "testmail1");
+        User user = testUser(1L, "testname1", "example@mail.com");
         post.setUser(user);
         user.addPost(post);
 
@@ -109,7 +109,7 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenPostIdIsNull() {
+    public void shouldThrowConstraintViolationExceptionWhenPostIdIsNull_getPostById() {
 
         assertThatThrownBy(() -> postService.getPostById(null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -122,9 +122,24 @@ public class PostServiceTest {
 							v.getMessage().equals("PostId mustn't be null."));
 				});
     }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenPostIdIsNotPositive_getPostById() {
+
+        assertThatThrownBy(() -> postService.getPostById(0L))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId must be positive number."));
+				});
+    }
 
     @Test
-    public void shouldThrowPostNotFoundExceptionWhenPostNotFoundInDB() {
+    public void shouldThrowPostNotFoundExceptionWhenPostNotFoundInDB_getPostById() {
 
         when(postRepository.findById(100L)).thenReturn(Optional.empty());
         Exception exception = assertThrows(PostNotFoundException.class,
@@ -161,7 +176,7 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenNullArguments() {
+    public void shouldThrowConstraintViolationExceptionWhenNullArguments_createNewPost() {
 
 		assertThatThrownBy(() -> postService.createNewPost(null, null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -179,7 +194,7 @@ public class PostServiceTest {
     }
 	
 	@Test
-    public void shouldThrowConstraintViolationExceptionWhenDtoNotValid() {
+    public void shouldThrowConstraintViolationExceptionWhenDtoNotValid_createNewPost() {
 
         PostDTO postDTOArgNullTitle = testPostDTO(11L, null, "some text", null);
         Long userIdArg = 1L;
@@ -195,9 +210,27 @@ public class PostServiceTest {
 							v.getMessage().equals("Blank post title."));
 				});
     }
+	
+	@Test
+    public void shouldThrowConstraintViolationExceptionWhenUserIdIsNotPositive_createNewPost() {
+
+        PostDTO postDTOArg = testPostDTO(11L, "some title", "some text", null);
+        Long userIdArg = -1L;
+
+		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDTOArg))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("userId") &&
+							v.getMessage().equals("UserId must be positive number."));
+				});
+    }
 
     @Test
-    public void shouldThrowUserNotFoundExceptionWhenCreatingNewPost() {
+    public void shouldThrowUserNotFoundException_createNewPost() {
 
         PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
         Long userIdArg = 1L;
@@ -239,7 +272,7 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenUpdateExistingPostWithNullArgs() {
+    public void shouldThrowConstraintViolationException_NullArgs_updateExistingPost() {
 
 		assertThatThrownBy(() -> postService.updateExistingPost(null, null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -257,7 +290,7 @@ public class PostServiceTest {
     }
 	
 	@Test
-    public void shouldThrowConstraintViolationExceptionWhenUpdateExistingPostWithDTONotValid() {
+    public void shouldThrowConstraintViolationException_DtoNotValid_updateExistingPost() {
 
         PostDTO postDTOArgNullTitle = testPostDTO(null, null, "some text", 2L);
         Long postIdArg = 1L;
@@ -273,9 +306,27 @@ public class PostServiceTest {
 							v.getMessage().equals("Blank post title."));
 				});
     }
+	
+	@Test
+    public void shouldThrowConstraintViolationException_PostIdNotPositive_updateExistingPost() {
+
+        PostDTO postDTOArg = testPostDTO(null, "some title", "some text", 2L);
+        Long postIdArg = -1L;
+
+		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDTOArg))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId must be positive number."));
+				});
+    }
 
     @Test
-    public void shouldThrowPostNotFoundExceptionWhenUpdatingPost() {
+    public void shouldThrowPostNotFoundException_updateExistingPost() {
 
         PostDTO postDTOArg = testPostDTO(null, "test title", "some text", null);
         Long postIdArg = 1L;
@@ -296,7 +347,7 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldThrowConstraintViolationExceptionWhenDeletePostWithNullIdArg() {
+    public void shouldThrowConstraintViolationException_NullArg_deletePostById() {
 
 		assertThatThrownBy(() -> postService.deletePostById(null))
 				.isInstanceOf(ConstraintViolationException.class)
@@ -307,6 +358,21 @@ public class PostServiceTest {
 						.anyMatch(v -> 
 							v.getPropertyPath().toString().contains("postId") &&
 							v.getMessage().equals("PostId mustn't be null."));
+				});
+    }
+	
+	@Test
+    public void shouldThrowConstraintViolationException_postIdNotPositive_deletePostById() {
+
+		assertThatThrownBy(() -> postService.deletePostById(-1L))
+				.isInstanceOf(ConstraintViolationException.class)
+                .satisfies(exception -> {
+					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
+					assertThat(violations).hasSize(1);
+					assertThat(violations)
+						.anyMatch(v -> 
+							v.getPropertyPath().toString().contains("postId") &&
+							v.getMessage().equals("PostId must be positive number."));
 				});
     }
 
