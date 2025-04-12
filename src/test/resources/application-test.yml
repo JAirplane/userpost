@@ -13,10 +13,14 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
+    properties:
+      hibernate.format_sql: true
+      hibernate.generate_statistics: true
   h2:
     console:
       enabled: true
 logging:
   level:
-    org.hibernate: DEBUG
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace

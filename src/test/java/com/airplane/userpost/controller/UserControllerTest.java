@@ -9,6 +9,8 @@ import com.airplane.userpost.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.hibernate.Session;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -141,6 +142,34 @@ public class UserControllerTest {
                     .andExpect(jsonPath("$.posts[*].text", hasItem("text1")))
                     .andExpect(jsonPath("$.posts[*].title", hasItem("title2")))
                     .andExpect(jsonPath("$.posts[*].text", hasItem("text2")));
+    }
+
+    @Test
+    public void hibernateNPlus1Test() throws Exception {
+
+        for(int i = 1; i < 6; i++) {
+            User user = testUser(null, "test name" + i, "test mail1" + i);
+
+            for(int j = 1; j < 5; j++) {
+                Post post = testPost(null, "title" + j, "text" + j);
+                post.setUser(user);
+                user.addPost(post);
+            }
+            userRepository.save(user);
+        }
+
+        Session session = entityManager.unwrap(Session.class);
+        Statistics statistics = session.getSessionFactory().getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+
+        mockMvc.perform(get("/users")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        long queries = statistics.getPrepareStatementCount();
+
+        assertTrue(queries <= 2);
     }
 	
 	@Test
