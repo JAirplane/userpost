@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
-public class UserDTO {
+public class UserDto {
     private final Long id;
 
     @NotBlank(message = "Username is empty.")
@@ -25,10 +25,10 @@ public class UserDTO {
     private final LocalDateTime createdAt;
 
     @Valid
-    private final Set<PostDTO> posts = new HashSet<>();
+    private final Set<PostDto> posts = new HashSet<>();
 
-    public void addPost(PostDTO postDTO) {
-        posts.add(postDTO);
+    public void addPost(PostDto postDto) {
+        posts.add(postDto);
     }
 
 }

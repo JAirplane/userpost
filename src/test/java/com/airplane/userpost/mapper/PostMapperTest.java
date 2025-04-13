@@ -1,6 +1,6 @@
 package com.airplane.userpost.mapper;
 
-import com.airplane.userpost.dto.PostDTO;
+import com.airplane.userpost.dto.PostDto;
 import com.airplane.userpost.exception.MapperException;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
@@ -23,20 +23,20 @@ public class PostMapperTest {
     //ToDTO() tests
 
     @Test
-    public void shouldReturnPostDTO() {
+    public void shouldReturnPostDto() {
 
-        PostDTO expected = testPostDTO(1L, "test title", "some text", 2L);
+        PostDto expected = buildPostDto(1L, "test title", "some text", 2L);
 
-        Post post = testPost(1L, "test title", "some text", 2L);
-        PostDTO postDTO = postMapper.toDTO(post);
+        Post post = buildPost(1L, "test title", "some text", 2L);
+        PostDto postDto = postMapper.toDto(post);
 
-        assertEquals(expected, postDTO);
+        assertEquals(expected, postDto);
     }
 
     @Test
     public void shouldThrowMapperExceptionWhenPostIsNull() {
         Exception exception = assertThrows(MapperException.class,
-                () -> postMapper.toDTO(null));
+                () -> postMapper.toDto(null));
 
         assertEquals("Mapper received null Post.", exception.getMessage());
     }
@@ -44,11 +44,11 @@ public class PostMapperTest {
     @Test
     public void shouldThrowMapperExceptionWhenUserOfPostIsNull() {
 
-        Post post = testPost(1L, "testTitle", "some text", 2L);
+        Post post = buildPost(1L, "testTitle", "some text", 2L);
         post.setUser(null);
 
         Exception exception = assertThrows(MapperException.class,
-                () -> postMapper.toDTO(post));
+                () -> postMapper.toDto(post));
 
         assertEquals("Mapper received Post with null User.", exception.getMessage());
     }
@@ -58,24 +58,24 @@ public class PostMapperTest {
     @Test
     public void shouldReturnPost() {
 
-        Post expected = testPost(5L, "Title", "text", 3L);
+        Post expected = buildPost(5L, "Title", "text", 3L);
         expected.setUser(null);
 
-        Post post = postMapper.toPost(testPostDTO(5L, "Title", "text", 3L));
+        Post post = postMapper.toPost(buildPostDto(5L, "Title", "text", 3L));
 
         assertEquals(expected, post);
     }
 
     @Test
-    public void shouldThrowMapperExceptionWhenDTOIsNull() {
+    public void shouldThrowMapperExceptionWhenDtoIsNull() {
 
         Exception exception = assertThrows(MapperException.class,
                 () -> postMapper.toPost(null));
 
-        assertEquals("Mapper received null PostDTO.", exception.getMessage());
+        assertEquals("Mapper received null PostDto.", exception.getMessage());
     }
 
-    private Post testPost(Long id, String title, String text, Long userId) {
+    private Post buildPost(Long id, String title, String text, Long userId) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -92,7 +92,7 @@ public class PostMapperTest {
         return post;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto(Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 }

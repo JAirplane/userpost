@@ -1,6 +1,6 @@
 package com.airplane.userpost.service;
 
-import com.airplane.userpost.dto.PostDTO;
+import com.airplane.userpost.dto.PostDto;
 import com.airplane.userpost.exception.PostNotFoundException;
 import com.airplane.userpost.exception.UserNotFoundException;
 import com.airplane.userpost.mapper.PostMapper;
@@ -37,17 +37,17 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostDTO> getAllPosts() {
+    public List<PostDto> getAllPosts() {
 
         Iterable<Post> posts = postRepository.findAll();
         log.info("All posts retrieved from DB.");
 
         return StreamSupport.stream(posts.spliterator(), false)
-                .map(postMapper::toDTO).toList();
+                .map(postMapper::toDto).toList();
     }
 
     @Transactional(readOnly = true)
-    public PostDTO getPostById(@NotNull(message = "PostId mustn't be null.")
+    public PostDto getPostById(@NotNull(message = "PostId mustn't be null.")
 								@Positive(message = "PostId must be positive number.") Long postId) {
 
         Post post = postRepository.findById(postId)
@@ -55,18 +55,18 @@ public class PostService {
 
         log.info("Post with Id '{}' found.", post.getId());
 
-        return postMapper.toDTO(post);
+        return postMapper.toDto(post);
     }
 
     @Transactional
-    public PostDTO createNewPost(@NotNull(message = "UserId mustn't be null.")
+    public PostDto createNewPost(@NotNull(message = "UserId mustn't be null.")
 								@Positive(message = "UserId must be positive number.") Long userId,
-			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
+                                 @NotNull(message = "PostDto mustn't be null.") @Valid PostDto postDto) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found for Id: " + userId));
 
-        Post post = postMapper.toPost(postDTO);
+        Post post = postMapper.toPost(postDto);
         post.setId(null);
         post.setUser(user);
 
@@ -74,24 +74,24 @@ public class PostService {
 
         log.info("New post with Id '{}' created.", savedPost.getId());
 
-        return postMapper.toDTO(savedPost);
+        return postMapper.toDto(savedPost);
     }
 
     @Transactional
-    public PostDTO updateExistingPost(@NotNull(message = "PostId mustn't be null.")
+    public PostDto updateExistingPost(@NotNull(message = "PostId mustn't be null.")
 									@Positive(message = "PostId must be positive number.") Long postId,
-			@NotNull(message = "PostDTO mustn't be null.") @Valid PostDTO postDTO) {
+                                      @NotNull(message = "PostDto mustn't be null.") @Valid PostDto postDto) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("Post wasn't found for Id: " + postId));
 
         //no need to update user, id and createdAt fields
-        post.setTitle(postDTO.title());
-        post.setText(postDTO.text());
+        post.setTitle(postDto.title());
+        post.setText(postDto.text());
 
         Post updatedPost = postRepository.save(post);
         log.info("Post with Id '{}' updated.", updatedPost.getId());
-        return postMapper.toDTO(updatedPost);
+        return postMapper.toDto(updatedPost);
     }
 
     @Transactional

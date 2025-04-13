@@ -1,7 +1,7 @@
 package com.airplane.userpost.service;
 
-import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.PostDto;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.exception.UserNotFoundException;
 import com.airplane.userpost.mapper.UserMapper;
 import com.airplane.userpost.model.Post;
@@ -57,13 +57,13 @@ public class UserServiceTest {
 
     @Test
     void shouldReturnAllUsers() {
-        User user1 = testUser(1L, "test name1", "test mail1");
-        User user2 = testUser(2L, "test name2", "test mail2");
+        User user1 = buildUser(1L, "test name1", "test mail1");
+        User user2 = buildUser(2L, "test name2", "test mail2");
 
-        Post post1 = testPost(1L, "title1", "text1");
-        Post post2 = testPost(2L, "title2", "text2");
-        Post post3 = testPost(3L, "title3", "text3");
-        Post post4 = testPost(4L, "title4", "text4");
+        Post post1 = buildPost(1L, "title1", "text1");
+        Post post2 = buildPost(2L, "title2", "text2");
+        Post post3 = buildPost(3L, "title3", "text3");
+        Post post4 = buildPost(4L, "title4", "text4");
 
         post1.setUser(user1);
         post2.setUser(user2);
@@ -75,26 +75,26 @@ public class UserServiceTest {
         user2.addPost(post3);
         user2.addPost(post4);
 
-        UserDTO userDTO1 = testUserDTO(1L, "test name1", "test mail1");
-        UserDTO userDTO2 = testUserDTO(2L, "test name2", "test mail2");
+        UserDto userDto1 = buildUserDto(1L, "test name1", "test mail1");
+        UserDto userDto2 = buildUserDto(2L, "test name2", "test mail2");
 
-        PostDTO postDTO1 = testPostDTO(1L, "title1", "text1", 1L);
-        PostDTO postDTO2 = testPostDTO(2L, "title2", "text2", 2L);
-        PostDTO postDTO3 = testPostDTO(3L, "title3", "text3", 2L);
-        PostDTO postDTO4 = testPostDTO(4L, "title4", "text4", 2L);
+        PostDto postDto1 = buildPostDto(1L, "title1", "text1", 1L);
+        PostDto postDto2 = buildPostDto(2L, "title2", "text2", 2L);
+        PostDto postDto3 = buildPostDto(3L, "title3", "text3", 2L);
+        PostDto postDto4 = buildPostDto(4L, "title4", "text4", 2L);
 
-        userDTO1.addPost(postDTO1);
-        userDTO2.addPost(postDTO2);
-        userDTO2.addPost(postDTO3);
-        userDTO2.addPost(postDTO4);
+        userDto1.addPost(postDto1);
+        userDto2.addPost(postDto2);
+        userDto2.addPost(postDto3);
+        userDto2.addPost(postDto4);
 
-        List<UserDTO> expectedUsers = List.of(userDTO1, userDTO2);
+        List<UserDto> expectedUsers = List.of(userDto1, userDto2);
 
         when(userRepository.findAll()).thenReturn(List.of(user1, user2));
-        when(userMapper.toDTO(user1)).thenReturn(userDTO1);
-        when(userMapper.toDTO(user2)).thenReturn(userDTO2);
+        when(userMapper.toDto(user1)).thenReturn(userDto1);
+        when(userMapper.toDto(user2)).thenReturn(userDto2);
 
-        List<UserDTO> result = userService.getAllUsers();
+        List<UserDto> result = userService.getAllUsers();
 
         assertEquals(expectedUsers, result);
     }
@@ -104,30 +104,30 @@ public class UserServiceTest {
 
         Long userIdArg = 1L;
 
-        User userFromDB = testUser(userIdArg, "test name", "test mail");
-        Post post1 = testPost(1L, "test title1", "test text1");
+        User userFromDB = buildUser(userIdArg, "test name", "test mail");
+        Post post1 = buildPost(1L, "test title1", "test text1");
         post1.setUser(userFromDB);
-        Post post2 = testPost(2L, "test title2", "test text2");
+        Post post2 = buildPost(2L, "test title2", "test text2");
         post2.setUser(userFromDB);
         userFromDB.addPost(post1);
         userFromDB.addPost(post2);
 
-        UserDTO expectedUser = testUserDTO(userIdArg, "test name", "test mail");
-        PostDTO postDTO1 = testPostDTO(1L, "test title1", "test text1", userIdArg);
-        PostDTO postDTO2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
-        expectedUser.addPost(postDTO1);
-        expectedUser.addPost(postDTO2);
+        UserDto expectedUser = buildUserDto(userIdArg, "test name", "test mail");
+        PostDto postDto1 = buildPostDto(1L, "test title1", "test text1", userIdArg);
+        PostDto postDto2 = buildPostDto(2L, "test title2", "test text2", userIdArg);
+        expectedUser.addPost(postDto1);
+        expectedUser.addPost(postDto2);
 
-        UserDTO userDTOFromMapper = testUserDTO(userIdArg, "test name", "test mail");
-        PostDTO postDTOFromMapper1 = testPostDTO(1L, "test title1", "test text1", userIdArg);
-        PostDTO postDTOFromMapper2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
-        userDTOFromMapper.addPost(postDTOFromMapper1);
-        userDTOFromMapper.addPost(postDTOFromMapper2);
+        UserDto userDtoFromMapper = buildUserDto(userIdArg, "test name", "test mail");
+        PostDto postDtoFromMapper1 = buildPostDto(1L, "test title1", "test text1", userIdArg);
+        PostDto postDtoFromMapper2 = buildPostDto(2L, "test title2", "test text2", userIdArg);
+        userDtoFromMapper.addPost(postDtoFromMapper1);
+        userDtoFromMapper.addPost(postDtoFromMapper2);
 
         when(userRepository.findById(userIdArg)).thenReturn(Optional.of(userFromDB));
-        when(userMapper.toDTO(userFromDB)).thenReturn(userDTOFromMapper);
+        when(userMapper.toDto(userFromDB)).thenReturn(userDtoFromMapper);
 
-        UserDTO result = userService.getUserById(userIdArg);
+        UserDto result = userService.getUserById(userIdArg);
 
         assertEquals(expectedUser, result);
     }
@@ -176,20 +176,20 @@ public class UserServiceTest {
     @Test
     void shouldReturnCreatedNewUser() {
 
-        UserDTO userDTOArg = testUserDTO(null, "test name", "example@mail.com");
+        UserDto userDtoArg = buildUserDto(null, "test name", "example@mail.com");
 
-        User userFromMapper = testUser(null, "test name", "example@mail.com");
-        User savedUser = testUser(1L, "test name", "example@mail.com");
+        User userFromMapper = buildUser(null, "test name", "example@mail.com");
+        User savedUser = buildUser(1L, "test name", "example@mail.com");
 
-        UserDTO userDTOFromMapper = testUserDTO(1L, "test name", "example@mail.com");
+        UserDto userDtoFromMapper = buildUserDto(1L, "test name", "example@mail.com");
 
-        UserDTO expectedUserDTO = testUserDTO(1L, "test name", "example@mail.com");
+        UserDto expectedUserDto = buildUserDto(1L, "test name", "example@mail.com");
 
-        when(userMapper.toUser(userDTOArg)).thenReturn(userFromMapper);
+        when(userMapper.toUser(userDtoArg)).thenReturn(userFromMapper);
         when(userRepository.save(userFromMapper)).thenReturn(savedUser);
-        when(userMapper.toDTO(savedUser)).thenReturn(userDTOFromMapper);
+        when(userMapper.toDto(savedUser)).thenReturn(userDtoFromMapper);
 
-        assertEquals(expectedUserDTO, userService.createNewUser(userDTOArg));
+        assertEquals(expectedUserDto, userService.createNewUser(userDtoArg));
     }
 
     @Test
@@ -202,17 +202,17 @@ public class UserServiceTest {
 					assertThat(violations).hasSize(1);
 					assertThat(violations)
 						.anyMatch(v -> 
-							v.getPropertyPath().toString().contains("userDTO") &&
-							v.getMessage().equals("UserDTO mustn't be null."));
+							v.getPropertyPath().toString().contains("userDto") &&
+							v.getMessage().equals("UserDto mustn't be null."));
 				});
     }
 
     @Test
-    public void shouldThrowConstraintViolationException_NullUserDTOFields_createNewUser() {
+    public void shouldThrowConstraintViolationException_NullUserDtoFields_createNewUser() {
 
-		UserDTO userDTOArg = testUserDTO(null, null, null);
+		UserDto userDtoArg = buildUserDto(null, null, null);
 
-		assertThatThrownBy(() -> userService.createNewUser(userDTOArg))
+		assertThatThrownBy(() -> userService.createNewUser(userDtoArg))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -230,9 +230,9 @@ public class UserServiceTest {
 	@Test
     public void shouldThrowConstraintViolationException_BadEmail_createNewUser() {
 
-		UserDTO userDTOArg = testUserDTO(null, "test name", "bad mail");
+		UserDto userDtoArg = buildUserDto(null, "test name", "bad mail");
 
-		assertThatThrownBy(() -> userService.createNewUser(userDTOArg))
+		assertThatThrownBy(() -> userService.createNewUser(userDtoArg))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -248,26 +248,26 @@ public class UserServiceTest {
     void shouldReturnUpdatedExistingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "changed name", "changed@mail.com");
-        PostDTO postDTO1 = testPostDTO(1L, "changed title1", "changed text1", null);
-        PostDTO postDTO2 = testPostDTO(null, "test title2", "test text2", null);
-        PostDTO postDTO3 = testPostDTO(null, "test title3", "test text3", null);
-        userDTOArg.addPost(postDTO1);
-        userDTOArg.addPost(postDTO2);
-        userDTOArg.addPost(postDTO3);
+        UserDto userDtoArg = buildUserDto(null, "changed name", "changed@mail.com");
+        PostDto postDto1 = buildPostDto(1L, "changed title1", "changed text1", null);
+        PostDto postDto2 = buildPostDto(null, "test title2", "test text2", null);
+        PostDto postDto3 = buildPostDto(null, "test title3", "test text3", null);
+        userDtoArg.addPost(postDto1);
+        userDtoArg.addPost(postDto2);
+        userDtoArg.addPost(postDto3);
 
-        User userFromDB = testUser(userIdArg, "test name", "example@mail.com");
-        Post post = testPost(8L, "test title4", "test text4");
+        User userFromDB = buildUser(userIdArg, "test name", "example@mail.com");
+        Post post = buildPost(8L, "test title4", "test text4");
         post.setUser(userFromDB);
         userFromDB.addPost(post);
 
-        Post existingPost = testPost(1L, "test title1", "test text1");
+        Post existingPost = buildPost(1L, "test title1", "test text1");
         existingPost.setUser(userFromDB);
 
-        User updatedUser = testUser(userIdArg, "changed name", "changed@mail.com");
-        Post post1 = testPost(1L, "changed title1", "changed text1");
-        Post post2 = testPost(null, "test title2", "test text2");
-        Post post3 = testPost(null, "test title3", "test text3");
+        User updatedUser = buildUser(userIdArg, "changed name", "changed@mail.com");
+        Post post1 = buildPost(1L, "changed title1", "changed text1");
+        Post post2 = buildPost(null, "test title2", "test text2");
+        Post post3 = buildPost(null, "test title3", "test text3");
         post1.setUser(updatedUser);
         post2.setUser(updatedUser);
         post3.setUser(updatedUser);
@@ -276,10 +276,10 @@ public class UserServiceTest {
         updatedUser.addPost(post2);
         updatedUser.addPost(post3);
 
-        User savedUser = testUser(userIdArg, "changed name", "changed@mail.com");
-        Post updatedPost1 = testPost(1L, "changed title1", "changed text1");
-        Post savedPost2 = testPost(2L, "test title2", "test text2");
-        Post savedPost3 = testPost(3L, "test title3", "test text3");
+        User savedUser = buildUser(userIdArg, "changed name", "changed@mail.com");
+        Post updatedPost1 = buildPost(1L, "changed title1", "changed text1");
+        Post savedPost2 = buildPost(2L, "test title2", "test text2");
+        Post savedPost3 = buildPost(3L, "test title3", "test text3");
         updatedPost1.setUser(savedUser);
         savedPost2.setUser(savedUser);
         savedPost3.setUser(savedUser);
@@ -288,19 +288,19 @@ public class UserServiceTest {
         savedUser.addPost(savedPost2);
         savedUser.addPost(savedPost3);
 
-        UserDTO mappedUser = testUserDTO(userIdArg, "changed name", "changed@mail.com");
-        PostDTO mappedPost1 = testPostDTO(1L, "changed title1", "changed text1", userIdArg);
-        PostDTO mappedPost2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
-        PostDTO mappedPost3 = testPostDTO(3L, "test title3", "test text3", userIdArg);
+        UserDto mappedUser = buildUserDto(userIdArg, "changed name", "changed@mail.com");
+        PostDto mappedPost1 = buildPostDto(1L, "changed title1", "changed text1", userIdArg);
+        PostDto mappedPost2 = buildPostDto(2L, "test title2", "test text2", userIdArg);
+        PostDto mappedPost3 = buildPostDto(3L, "test title3", "test text3", userIdArg);
 
         mappedUser.addPost(mappedPost1);
         mappedUser.addPost(mappedPost2);
         mappedUser.addPost(mappedPost3);
 
-        UserDTO expectedUser = testUserDTO(userIdArg, "changed name", "changed@mail.com");
-        PostDTO expectedPost1 = testPostDTO(1L, "changed title1", "changed text1", userIdArg);
-        PostDTO expectedPost2 = testPostDTO(2L, "test title2", "test text2", userIdArg);
-        PostDTO expectedPost3 = testPostDTO(3L, "test title3", "test text3", userIdArg);
+        UserDto expectedUser = buildUserDto(userIdArg, "changed name", "changed@mail.com");
+        PostDto expectedPost1 = buildPostDto(1L, "changed title1", "changed text1", userIdArg);
+        PostDto expectedPost2 = buildPostDto(2L, "test title2", "test text2", userIdArg);
+        PostDto expectedPost3 = buildPostDto(3L, "test title3", "test text3", userIdArg);
 
         expectedUser.addPost(expectedPost1);
         expectedUser.addPost(expectedPost2);
@@ -309,9 +309,9 @@ public class UserServiceTest {
         when(userRepository.findById(userIdArg)).thenReturn(Optional.of(userFromDB));
         when(postRepository.findById(1L)).thenReturn(Optional.of(existingPost));
         when(userRepository.save(updatedUser)).thenReturn(savedUser);
-        when(userMapper.toDTO(savedUser)).thenReturn(mappedUser);
+        when(userMapper.toDto(savedUser)).thenReturn(mappedUser);
 
-        assertEquals(expectedUser, userService.updateExistingUser(userIdArg, userDTOArg));
+        assertEquals(expectedUser, userService.updateExistingUser(userIdArg, userDtoArg));
     }
 
     @Test
@@ -327,18 +327,18 @@ public class UserServiceTest {
 							v.getPropertyPath().toString().contains("userId") &&
 							v.getMessage().equals("UserId mustn't be null."))
 						.anyMatch(v -> 
-							v.getPropertyPath().toString().contains("userDTO") &&
-							v.getMessage().equals("UserDTO mustn't be null."));
+							v.getPropertyPath().toString().contains("userDto") &&
+							v.getMessage().equals("UserDto mustn't be null."));
 				});
     }
 
     @Test
-    public void shouldThrowConstraintViolationException_BadUserDTOFields_updateExistingUser() {
+    public void shouldThrowConstraintViolationException_BadUserDtoFields_updateExistingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, null, "changed mail");
+        UserDto userDtoArg = buildUserDto(null, null, "changed mail");
 
-		assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+		assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDtoArg))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -357,11 +357,11 @@ public class UserServiceTest {
     public void shouldThrowConstraintViolation_BadPostField_updateExistingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "username", "example@mail.com");
-        PostDTO badPost = testPostDTO(null, null, "text", userIdArg);
-        userDTOArg.addPost(badPost);
+        UserDto userDtoArg = buildUserDto(null, "username", "example@mail.com");
+        PostDto badPost = buildPostDto(null, null, "text", userIdArg);
+        userDtoArg.addPost(badPost);
 
-        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDtoArg))
                 .isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
                     var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -377,11 +377,11 @@ public class UserServiceTest {
     public void shouldThrowConstraintViolation_UserIdNotPositive_updateExistingUser() {
 
         Long userIdArg = -1L;
-        UserDTO userDTOArg = testUserDTO(null, "username", "example@mail.com");
-        PostDTO post = testPostDTO(null, "title", "text", userIdArg);
-        userDTOArg.addPost(post);
+        UserDto userDtoArg = buildUserDto(null, "username", "example@mail.com");
+        PostDto post = buildPostDto(null, "title", "text", userIdArg);
+        userDtoArg.addPost(post);
 
-        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDTOArg))
+        assertThatThrownBy(() -> userService.updateExistingUser(userIdArg, userDtoArg))
                 .isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
                     var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -397,10 +397,10 @@ public class UserServiceTest {
     public void shouldThrowUserNotFoundException_updateExistingUser() {
 
         Long userIdArg = 1L;
-        UserDTO userDTOArg = testUserDTO(null, "test name", "example@mail.com");
+        UserDto userDtoArg = buildUserDto(null, "test name", "example@mail.com");
 
         Exception exception = assertThrows(UserNotFoundException.class,
-                () -> userService.updateExistingUser(userIdArg, userDTOArg));
+                () -> userService.updateExistingUser(userIdArg, userDtoArg));
 
         assertEquals("User not found with Id: 1", exception.getMessage());
 
@@ -444,7 +444,7 @@ public class UserServiceTest {
 				});
     }
 
-    private Post testPost(Long id, String title, String text) {
+    private Post buildPost(Long id, String title, String text) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -454,11 +454,11 @@ public class UserServiceTest {
         return post;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto(Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 
-    private User testUser(Long userId, String username, String email) {
+    private User buildUser(Long userId, String username, String email) {
         User user = new User();
         user.setId(userId);
         user.setUserName(username);
@@ -468,7 +468,7 @@ public class UserServiceTest {
         return user;
     }
 
-    private UserDTO testUserDTO(Long userId, String username, String email) {
-        return new UserDTO(userId, username, email, LocalDateTime.now());
+    private UserDto buildUserDto(Long userId, String username, String email) {
+        return new UserDto(userId, username, email, LocalDateTime.now());
     }
 }

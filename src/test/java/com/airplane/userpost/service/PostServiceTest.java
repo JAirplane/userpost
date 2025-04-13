@@ -1,6 +1,6 @@
 package com.airplane.userpost.service;
 
-import com.airplane.userpost.dto.PostDTO;
+import com.airplane.userpost.dto.PostDto;
 import com.airplane.userpost.exception.PostNotFoundException;
 import com.airplane.userpost.exception.UserNotFoundException;
 import com.airplane.userpost.mapper.PostMapper;
@@ -55,20 +55,20 @@ public class PostServiceTest {
 
     @Test
     public void shouldReturnAllPosts() {
-        PostDTO postDTO1 = testPostDTO(1L, "title1", "text1", 1L);
-        PostDTO postDTO2 = testPostDTO(2L, "title2", "text2", 1L);
-        PostDTO postDTO3 = testPostDTO(3L, "title3", "text3", 2L);
-        PostDTO postDTO4 = testPostDTO(4L, "title4", "text4", 2L);
+        PostDto postDto1 = buildPostDto(1L, "title1", "text1", 1L);
+        PostDto postDto2 = buildPostDto(2L, "title2", "text2", 1L);
+        PostDto postDto3 = buildPostDto(3L, "title3", "text3", 2L);
+        PostDto postDto4 = buildPostDto(4L, "title4", "text4", 2L);
 
-        List<PostDTO> expectedPosts = List.of(postDTO1, postDTO2, postDTO3, postDTO4);
+        List<PostDto> expectedPosts = List.of(postDto1, postDto2, postDto3, postDto4);
 
-        Post post1 = testPost(1L, "title1", "text1");
-        Post post2 = testPost(2L, "title2", "text2");
-        Post post3 = testPost(3L, "title3", "text3");
-        Post post4 = testPost(4L, "title4", "text4");
+        Post post1 = buildPost(1L, "title1", "text1");
+        Post post2 = buildPost(2L, "title2", "text2");
+        Post post3 = buildPost(3L, "title3", "text3");
+        Post post4 = buildPost(4L, "title4", "text4");
 
-        User user1 = testUser(1L, "testname1", "testmail1");
-        User user2 = testUser(2L, "testname2", "testmail2");
+        User user1 = buildUser(1L, "testname1", "testmail1");
+        User user2 = buildUser(2L, "testname2", "testmail2");
 
         post1.setUser(user1);
         post2.setUser(user1);
@@ -81,31 +81,31 @@ public class PostServiceTest {
         user2.addPost(post4);
 
         when(postRepository.findAll()).thenReturn(List.of(post1, post2, post3, post4));
-        when(postMapper.toDTO(post1)).thenReturn(postDTO1);
-        when(postMapper.toDTO(post2)).thenReturn(postDTO2);
-        when(postMapper.toDTO(post3)).thenReturn(postDTO3);
-        when(postMapper.toDTO(post4)).thenReturn(postDTO4);
+        when(postMapper.toDto(post1)).thenReturn(postDto1);
+        when(postMapper.toDto(post2)).thenReturn(postDto2);
+        when(postMapper.toDto(post3)).thenReturn(postDto3);
+        when(postMapper.toDto(post4)).thenReturn(postDto4);
 
-        List<PostDTO> posts = postService.getAllPosts();
+        List<PostDto> posts = postService.getAllPosts();
 
         assertEquals(expectedPosts, posts);
     }
 
     @Test
     public void shouldReturnPostDTO_getPostById() {
-        PostDTO expectedPost = testPostDTO(1L, "title1", "text1", 1L);
+        PostDto expectedPost = buildPostDto(1L, "title1", "text1", 1L);
 
-        Post post = testPost(1L, "title1", "text1");
-        User user = testUser(1L, "testname1", "example@mail.com");
+        Post post = buildPost(1L, "title1", "text1");
+        User user = buildUser(1L, "testname1", "example@mail.com");
         post.setUser(user);
         user.addPost(post);
 
         when(postRepository.findById(1L)).thenReturn(Optional.of(post));
-        when(postMapper.toDTO(post)).thenReturn(testPostDTO(1L, "title1", "text1", 1L));
+        when(postMapper.toDto(post)).thenReturn(buildPostDto(1L, "title1", "text1", 1L));
 
-        PostDTO postDTO = postService.getPostById(1L);
+        PostDto postDto = postService.getPostById(1L);
 
-        assertEquals(expectedPost, postDTO);
+        assertEquals(expectedPost, postDto);
     }
 
     @Test
@@ -149,28 +149,28 @@ public class PostServiceTest {
     }
 
     @Test
-    public void shouldReturnCreatedPostDTO() {
+    public void shouldReturnCreatedPostDto() {
         Long userIdArg = 1L;
-        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+        PostDto postDtoArg = buildPostDto(11L, "test title", "some text", null);
 
-        User user = testUser(userIdArg, "test name", "test mail");
+        User user = buildUser(userIdArg, "test name", "test mail");
 
-        Post postFromMapper = testPost(null, "test title", "some text");
+        Post postFromMapper = buildPost(null, "test title", "some text");
         postFromMapper.setUser(user);
 
-        Post savedPost = testPost(2L, "test title", "some text");
+        Post savedPost = buildPost(2L, "test title", "some text");
         savedPost.setUser(user);
 
-        PostDTO postDTOFromMapper = testPostDTO(2L, "test title", "some text", user.getId());
+        PostDto postDtoFromMapper = buildPostDto(2L, "test title", "some text", user.getId());
 
-        PostDTO expected = testPostDTO(2L, "test title", "some text", userIdArg);
+        PostDto expected = buildPostDto(2L, "test title", "some text", userIdArg);
 
         when(userRepository.findById(userIdArg)).thenReturn(Optional.of(user));
-        when(postMapper.toPost(postDTOArg)).thenReturn(postFromMapper);
+        when(postMapper.toPost(postDtoArg)).thenReturn(postFromMapper);
         when(postRepository.save(postFromMapper)).thenReturn(savedPost);
-        when(postMapper.toDTO(savedPost)).thenReturn(postDTOFromMapper);
+        when(postMapper.toDto(savedPost)).thenReturn(postDtoFromMapper);
 
-        PostDTO result = postService.createNewPost(userIdArg, postDTOArg);
+        PostDto result = postService.createNewPost(userIdArg, postDtoArg);
 
         assertEquals(expected, result);
     }
@@ -188,18 +188,18 @@ public class PostServiceTest {
 							v.getPropertyPath().toString().contains("userId") &&
 							v.getMessage().equals("UserId mustn't be null."))
 						.anyMatch(v -> 
-							v.getPropertyPath().toString().contains("postDTO") &&
-							v.getMessage().equals("PostDTO mustn't be null."));
+							v.getPropertyPath().toString().contains("postDto") &&
+							v.getMessage().equals("PostDto mustn't be null."));
 				});
     }
 	
 	@Test
     public void shouldThrowConstraintViolationExceptionWhenDtoNotValid_createNewPost() {
 
-        PostDTO postDTOArgNullTitle = testPostDTO(11L, null, "some text", null);
+        PostDto postDtoArgNullTitle = buildPostDto(11L, null, "some text", null);
         Long userIdArg = 1L;
 
-		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDTOArgNullTitle))
+		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDtoArgNullTitle))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -214,10 +214,10 @@ public class PostServiceTest {
 	@Test
     public void shouldThrowConstraintViolationExceptionWhenUserIdIsNotPositive_createNewPost() {
 
-        PostDTO postDTOArg = testPostDTO(11L, "some title", "some text", null);
+        PostDto postDtoArg = buildPostDto(11L, "some title", "some text", null);
         Long userIdArg = -1L;
 
-		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDTOArg))
+		assertThatThrownBy(() -> postService.createNewPost(userIdArg, postDtoArg))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -232,13 +232,13 @@ public class PostServiceTest {
     @Test
     public void shouldThrowUserNotFoundException_createNewPost() {
 
-        PostDTO postDTOArg = testPostDTO(11L, "test title", "some text", null);
+        PostDto postDtoArg = buildPostDto(11L, "test title", "some text", null);
         Long userIdArg = 1L;
 
         when(userRepository.findById(userIdArg)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(UserNotFoundException.class,
-                () -> postService.createNewPost(userIdArg, postDTOArg));
+                () -> postService.createNewPost(userIdArg, postDtoArg));
 
         assertEquals("User not found for Id: 1", exception.getMessage());
     }
@@ -246,27 +246,27 @@ public class PostServiceTest {
     @Test
     public void shouldReturnUpdatedPost() {
         Long postIdArg = 1L;
-        PostDTO postDTOArg = testPostDTO(null, "changed title", "changed text", null);
+        PostDto postDtoArg = buildPostDto(null, "changed title", "changed text", null);
 
-        User user = testUser(2L, "test name", "test mail");
-        Post postFromDB = testPost(postIdArg, "other title", "other text");
+        User user = buildUser(2L, "test name", "test mail");
+        Post postFromDB = buildPost(postIdArg, "other title", "other text");
         postFromDB.setUser(user);
 
-        Post updatedPost = testPost(postIdArg, "changed title", "changed text");
+        Post updatedPost = buildPost(postIdArg, "changed title", "changed text");
         updatedPost.setUser(user);
 
-        Post updatedAndSavedPost = testPost(postIdArg, "changed title", "changed text");
+        Post updatedAndSavedPost = buildPost(postIdArg, "changed title", "changed text");
         updatedPost.setUser(user);
 
-        PostDTO postDTOFromMapper = testPostDTO(postIdArg, "changed title", "changed text", 2L);
+        PostDto postDtoFromMapper = buildPostDto(postIdArg, "changed title", "changed text", 2L);
 
-        PostDTO expected = testPostDTO(postIdArg, "changed title", "changed text", 2L);
+        PostDto expected = buildPostDto(postIdArg, "changed title", "changed text", 2L);
 
         when(postRepository.findById(postIdArg)).thenReturn(Optional.of(postFromDB));
         when(postRepository.save(updatedPost)).thenReturn(updatedAndSavedPost);
-        when(postMapper.toDTO(updatedAndSavedPost)).thenReturn(postDTOFromMapper);
+        when(postMapper.toDto(updatedAndSavedPost)).thenReturn(postDtoFromMapper);
 
-        PostDTO result = postService.updateExistingPost(postIdArg, postDTOArg);
+        PostDto result = postService.updateExistingPost(postIdArg, postDtoArg);
 
         assertEquals(expected, result);
     }
@@ -284,18 +284,18 @@ public class PostServiceTest {
 							v.getPropertyPath().toString().contains("postId") &&
 							v.getMessage().equals("PostId mustn't be null."))
 						.anyMatch(v -> 
-							v.getPropertyPath().toString().contains("postDTO") &&
-							v.getMessage().equals("PostDTO mustn't be null."));
+							v.getPropertyPath().toString().contains("postDto") &&
+							v.getMessage().equals("PostDto mustn't be null."));
 				});
     }
 	
 	@Test
     public void shouldThrowConstraintViolationException_DtoNotValid_updateExistingPost() {
 
-        PostDTO postDTOArgNullTitle = testPostDTO(null, null, "some text", 2L);
+        PostDto postDtoArgNullTitle = buildPostDto(null, null, "some text", 2L);
         Long postIdArg = 1L;
 
-		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDTOArgNullTitle))
+		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDtoArgNullTitle))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -310,10 +310,10 @@ public class PostServiceTest {
 	@Test
     public void shouldThrowConstraintViolationException_PostIdNotPositive_updateExistingPost() {
 
-        PostDTO postDTOArg = testPostDTO(null, "some title", "some text", 2L);
+        PostDto postDtoArg = buildPostDto(null, "some title", "some text", 2L);
         Long postIdArg = -1L;
 
-		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDTOArg))
+		assertThatThrownBy(() -> postService.updateExistingPost(postIdArg, postDtoArg))
 				.isInstanceOf(ConstraintViolationException.class)
                 .satisfies(exception -> {
 					var violations = ((ConstraintViolationException) exception).getConstraintViolations();
@@ -328,13 +328,13 @@ public class PostServiceTest {
     @Test
     public void shouldThrowPostNotFoundException_updateExistingPost() {
 
-        PostDTO postDTOArg = testPostDTO(null, "test title", "some text", null);
+        PostDto postDtoArg = buildPostDto(null, "test title", "some text", null);
         Long postIdArg = 1L;
 
         when(userRepository.findById(postIdArg)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(PostNotFoundException.class,
-                () -> postService.updateExistingPost(postIdArg, postDTOArg));
+                () -> postService.updateExistingPost(postIdArg, postDtoArg));
 
         assertEquals("Post wasn't found for Id: 1", exception.getMessage());
     }
@@ -376,7 +376,7 @@ public class PostServiceTest {
 				});
     }
 
-    private Post testPost(Long id, String title, String text) {
+    private Post buildPost(Long id, String title, String text) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -386,7 +386,7 @@ public class PostServiceTest {
         return post;
     }
 
-    private User testUser(Long userId, String username, String email) {
+    private User buildUser(Long userId, String username, String email) {
         User user = new User();
         user.setId(userId);
         user.setUserName(username);
@@ -396,7 +396,7 @@ public class PostServiceTest {
         return user;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto(Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 }

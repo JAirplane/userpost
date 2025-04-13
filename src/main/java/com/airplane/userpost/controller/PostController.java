@@ -1,6 +1,6 @@
 package com.airplane.userpost.controller;
 
-import com.airplane.userpost.dto.PostDTO;
+import com.airplane.userpost.dto.PostDto;
 import com.airplane.userpost.service.PostService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -23,33 +23,33 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostDTO>> allPosts() {
+    public ResponseEntity<List<PostDto>> allPosts() {
         log.info("AllPosts request received.");
 
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
     @GetMapping(path = "/{postId}")
-    public ResponseEntity<PostDTO> postById(@PathVariable Long postId) {
+    public ResponseEntity<PostDto> postById(@PathVariable Long postId) {
         log.info("Get Post request for Id {} received", postId);
 
         return ResponseEntity.ok(postService.getPostById(postId));
     }
 
     @PostMapping(path = "/{userId}")
-    public ResponseEntity<PostDTO> newPost(@PathVariable Long userId, @Valid @RequestBody PostDTO postDTO) {
+    public ResponseEntity<PostDto> newPost(@PathVariable Long userId, @Valid @RequestBody PostDto postDto) {
         log.info("Create Post request for User Id {} received", userId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(postService.createNewPost(userId, postDTO));
+                .body(postService.createNewPost(userId, postDto));
     }
 
     @PutMapping(path = "/{postId}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long postId, @Valid @RequestBody PostDTO postDTO) {
+    public ResponseEntity<PostDto> updatePost(@PathVariable Long postId, @Valid @RequestBody PostDto postDto) {
         log.info("Update Post request for Id {} received", postId);
 
         return ResponseEntity.ok()
-                .body(postService.updateExistingPost(postId, postDTO));
+                .body(postService.updateExistingPost(postId, postDto));
     }
 
     @DeleteMapping(path = "/{postId}")

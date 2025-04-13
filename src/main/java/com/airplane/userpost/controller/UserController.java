@@ -1,6 +1,6 @@
 package com.airplane.userpost.controller;
 
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -24,33 +24,33 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> allUsers() {
+    public ResponseEntity<List<UserDto>> allUsers() {
         log.info("AllUsers request received.");
 
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping(path = "/{id}")
-    public ResponseEntity<UserDTO> userById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> userById(@PathVariable Long id) {
         log.info("User request with id '{}' received.", id);
 
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
-    public ResponseEntity<UserDTO> newUser(@Valid @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDto> newUser(@Valid @RequestBody UserDto userDto) {
         log.info("NewUser request received. Username: {}, email: {}",
-                userDTO.getUserName(),
-                userDTO.getEmail());
+                userDto.getUserName(),
+                userDto.getEmail());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createNewUser(userDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createNewUser(userDto));
     }
 
     @PutMapping(path = "/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserDto userDto) {
         log.info("Update user request received for id '{}'", id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(userService.updateExistingUser(id, userDTO));
+        return ResponseEntity.status(HttpStatus.OK).body(userService.updateExistingUser(id, userDto));
     }
 
     @DeleteMapping(path = "/{id}")

@@ -1,7 +1,7 @@
 package com.airplane.userpost.mapper;
 
-import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.PostDto;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.exception.MapperException;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
@@ -18,10 +18,10 @@ public class UserMapper {
         this.postMapper = postMapper;
     }
 
-    public UserDTO toDTO(User user) {
+    public UserDto toDto(User user) {
         if(user == null) throw new MapperException("Mapper received null User.");
 
-        UserDTO userDTO = new UserDTO(
+        UserDto userDto = new UserDto(
                 user.getId(),
                 user.getUserName(),
                 user.getEmail(),
@@ -29,21 +29,21 @@ public class UserMapper {
         );
 
         for(Post post: user.getPosts()) {
-            userDTO.addPost(postMapper.toDTO(post));
+            userDto.addPost(postMapper.toDto(post));
         }
 
-        return userDTO;
+        return userDto;
     }
 
-    public User toUser(UserDTO userDTO) {
-        if(userDTO == null) throw new MapperException("Mapper received null UserDTO.");
+    public User toUser(UserDto userDto) {
+        if(userDto == null) throw new MapperException("Mapper received null UserDTO.");
 
         User user = new User();
-        user.setId(userDTO.getId());
-        user.setUserName(userDTO.getUserName());
-        user.setEmail(userDTO.getEmail());
+        user.setId(userDto.getId());
+        user.setUserName(userDto.getUserName());
+        user.setEmail(userDto.getEmail());
 
-        for(PostDTO postDTO: userDTO.getPosts()) {
+        for(PostDto postDTO: userDto.getPosts()) {
             Post post = postMapper.toPost(postDTO);
             post.setUser(user);
             user.addPost(post);

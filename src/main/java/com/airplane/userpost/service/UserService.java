@@ -1,7 +1,7 @@
 package com.airplane.userpost.service;
 
-import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.PostDto;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.exception.UserNotFoundException;
 import com.airplane.userpost.mapper.UserMapper;
 import com.airplane.userpost.model.Post;
@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.StreamSupport;
@@ -41,17 +40,17 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserDTO> getAllUsers() {
+    public List<UserDto> getAllUsers() {
 
         Iterable<User> allUsers = userRepository.findAll();
         log.info("All users retrieved from DB.");
         return StreamSupport.stream(allUsers.spliterator(), false)
-                .map(userMapper::toDTO)
+                .map(userMapper::toDto)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UserDTO getUserById(@NotNull(message = "UserId mustn't be null.")
+    public UserDto getUserById(@NotNull(message = "UserId mustn't be null.")
 							@Positive(message = "UserId must be positive number.") Long userId) {
 
         User user = userRepository.findById(userId)
@@ -59,52 +58,52 @@ public class UserService {
 
         log.info("User with Id '{}' received.", userId);
 		
-        return userMapper.toDTO(user);
+        return userMapper.toDto(user);
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO createNewUser(@NotNull(message = "UserDTO mustn't be null.") @Valid UserDTO userDTO) {
+    @Transactional
+    public UserDto createNewUser(@NotNull(message = "UserDto mustn't be null.") @Valid UserDto userDto) {
 		
 		//Post creation is not allowed here
-		userDTO.getPosts().clear();
+		userDto.getPosts().clear();
 		
-        User newUser = userMapper.toUser(userDTO);
+        User newUser = userMapper.toUser(userDto);
         newUser.setId(null);
 
         User savedUser = userRepository.save(newUser);
 		
         log.info("New user with Id '{}' created.", savedUser.getId());
 
-        return userMapper.toDTO(savedUser);
+        return userMapper.toDto(savedUser);
     }
 
     //do not updates CreatedAt field
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
-    public UserDTO updateExistingUser(@NotNull(message = "UserId mustn't be null.")
+    @Transactional
+    public UserDto updateExistingUser(@NotNull(message = "UserId mustn't be null.")
 									@Positive(message = "UserId must be positive number.") Long userId,
-			@NotNull(message = "UserDTO mustn't be null.") @Valid UserDTO userDTO) {
+                                      @NotNull(message = "UserDto mustn't be null.") @Valid UserDto userDto) {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with Id: " + userId));
 
-        existingUser.setUserName(userDTO.getUserName());
+        existingUser.setUserName(userDto.getUserName());
         log.info("User with Id {}. Username updated.", existingUser.getId());
 
-        existingUser.setEmail(userDTO.getEmail());
+        existingUser.setEmail(userDto.getEmail());
         log.info("User with Id '{}'. Email updated.", existingUser.getId());
 
         Set<Post> posts = existingUser.getPosts();
         posts.clear();
-        for(PostDTO postDTO: userDTO.getPosts()) {
+        for(PostDto postDto: userDto.getPosts()) {
 			Post post = null;
-			if(postDTO.id() == null) {
+			if(postDto.id() == null) {
 				post = new Post();
 			}
 			else {
-				post = postRepository.findById(postDTO.id()).orElse(new Post());
+				post = postRepository.findById(postDto.id()).orElse(new Post());
 			}
-			post.setTitle(postDTO.title());
-			post.setText(postDTO.text());
+			post.setTitle(postDto.title());
+			post.setText(postDto.text());
 			post.setUser(existingUser);
 			posts.add(post);
         }
@@ -112,7 +111,7 @@ public class UserService {
         //update user
         User savedUser = userRepository.save(existingUser);
         log.info("User with Id '{}' updated successfully.", existingUser.getId());
-        return userMapper.toDTO(savedUser);
+        return userMapper.toDto(savedUser);
     }
 
     @Transactional

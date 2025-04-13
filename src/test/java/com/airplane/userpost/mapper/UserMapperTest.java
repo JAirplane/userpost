@@ -1,7 +1,7 @@
 package com.airplane.userpost.mapper;
 
-import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.PostDto;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.exception.MapperException;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
@@ -29,33 +29,33 @@ public class UserMapperTest {
     //ToUserDTO tests
 
     @Test
-    public void shouldReturnUserDTO() {
-        User user = testUser(1L, "testname", "testtext");
-        Post post1 = testPost(1L, "title1", "text1");
+    public void shouldReturnUserDto() {
+        User user = buildUser(1L, "testname", "testtext");
+        Post post1 = buildPost(1L, "title1", "text1");
         post1.setUser(user);
-        Post post2 = testPost(2L, "title2", "text2");
+        Post post2 = buildPost(2L, "title2", "text2");
         post2.setUser(user);
         user.addPost(post1);
         user.addPost(post2);
 
-        UserDTO expected = testUserDTO(1L, "testname", "testtext");
-        PostDTO postDTO1 = testPostDTO(1L, "title1", "text1", expected.getId());
-        PostDTO postDTO2 = testPostDTO(2L, "title2", "text2", expected.getId());
-        expected.addPost(postDTO1);
-        expected.addPost(postDTO2);
+        UserDto expected = buildUserDto(1L, "testname", "testtext");
+        PostDto postDto1 = buildPostDto(1L, "title1", "text1", expected.getId());
+        PostDto postDto2 = buildPostDto(2L, "title2", "text2", expected.getId());
+        expected.addPost(postDto1);
+        expected.addPost(postDto2);
 
-        when(postMapper.toDTO(post1)).thenReturn(postDTO1);
-        when(postMapper.toDTO(post2)).thenReturn(postDTO2);
+        when(postMapper.toDto(post1)).thenReturn(postDto1);
+        when(postMapper.toDto(post2)).thenReturn(postDto2);
 
-        UserDTO userDTO = userMapper.toDTO(user);
+        UserDto userDto = userMapper.toDto(user);
 
-        assertEquals(expected, userDTO);
+        assertEquals(expected, userDto);
     }
 
     @Test
     public void shouldThrowMapperExceptionWhenNullUserReceived() {
         Exception exception = assertThrows(MapperException.class,
-                () -> userMapper.toDTO(null));
+                () -> userMapper.toDto(null));
 
         assertEquals("Mapper received null User.", exception.getMessage());
     }
@@ -64,37 +64,37 @@ public class UserMapperTest {
 
     @Test
     public void shouldReturnUser() {
-        UserDTO userDTO = testUserDTO(1L, "testname", "testtext");
-        PostDTO postDTO1 = testPostDTO(1L, "title1", "text1", userDTO.getId());
-        PostDTO postDTO2 = testPostDTO(2L, "title2", "text2", userDTO.getId());
-        userDTO.addPost(postDTO1);
-        userDTO.addPost(postDTO2);
+        UserDto userDto = buildUserDto(1L, "testname", "testtext");
+        PostDto postDto1 = buildPostDto(1L, "title1", "text1", userDto.getId());
+        PostDto postDto2 = buildPostDto(2L, "title2", "text2", userDto.getId());
+        userDto.addPost(postDto1);
+        userDto.addPost(postDto2);
 
-        User expected = testUser(1L, "testname", "testtext");
-        Post post1 = testPost(1L, "title1", "text1");
+        User expected = buildUser(1L, "testname", "testtext");
+        Post post1 = buildPost(1L, "title1", "text1");
         post1.setUser(expected);
-        Post post2 = testPost(2L, "title2", "text2");
+        Post post2 = buildPost(2L, "title2", "text2");
         post2.setUser(expected);
         expected.addPost(post1);
         expected.addPost(post2);
 
-        when(postMapper.toPost(postDTO1)).thenReturn(post1);
-        when(postMapper.toPost(postDTO2)).thenReturn(post2);
+        when(postMapper.toPost(postDto1)).thenReturn(post1);
+        when(postMapper.toPost(postDto2)).thenReturn(post2);
 
-        User user = userMapper.toUser(userDTO);
+        User user = userMapper.toUser(userDto);
 
         assertEquals(expected, user);
     }
 
     @Test
-    public void shouldThrowMapperExceptionWhenNullUserDTO() {
+    public void shouldThrowMapperExceptionWhenNullUserDto() {
         Exception exception = assertThrows(MapperException.class,
                 () -> userMapper.toUser(null));
 
         assertEquals("Mapper received null UserDTO.", exception.getMessage());
     }
 
-    private User testUser(Long userId, String username, String email) {
+    private User buildUser(Long userId, String username, String email) {
         User user = new User();
         user.setId(userId);
         user.setUserName(username);
@@ -104,11 +104,11 @@ public class UserMapperTest {
         return user;
     }
 
-    private UserDTO testUserDTO(Long id, String username, String email) {
-        return new UserDTO(id, username, email, LocalDateTime.now());
+    private UserDto buildUserDto(Long id, String username, String email) {
+        return new UserDto(id, username, email, LocalDateTime.now());
     }
 
-    private Post testPost(Long id, String title, String text) {
+    private Post buildPost(Long id, String title, String text) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -118,7 +118,7 @@ public class UserMapperTest {
         return post;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto(Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 }

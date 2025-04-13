@@ -1,6 +1,6 @@
 package com.airplane.userpost.controller;
 
-import com.airplane.userpost.dto.PostDTO;
+import com.airplane.userpost.dto.PostDto;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
@@ -53,10 +53,10 @@ public class PostControllerTest {
     @Test
     public void shouldReturnAllPosts() throws Exception {
 
-        User user = userRepository.save(testUser(null, "test name", "test mail"));
-        Post post1 = testPost(null, "test title1", "test text1");
+        User user = userRepository.save(buildUser(null, "test name", "test mail"));
+        Post post1 = buildPost(null, "test title1", "test text1");
         post1.setUser(user);
-        Post post2 = testPost(null, "test title2", "test text2");
+        Post post2 = buildPost(null, "test title2", "test text2");
         post2.setUser(user);
         postRepository.save(post1);
         postRepository.save(post2);
@@ -79,8 +79,8 @@ public class PostControllerTest {
 
     @Test
     public void shouldReturnPostById() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "test mail"));
-        Post post1 = testPost(null, "test title1", "test text1");
+        User user = userRepository.save(buildUser(null, "test name", "test mail"));
+        Post post1 = buildPost(null, "test title1", "test text1");
         post1.setUser(user);
         Post savedPost = postRepository.save(post1);
 
@@ -122,28 +122,28 @@ public class PostControllerTest {
     }
 
     @Test
-    public void shouldReturnCreatedPostDTO() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "example@mail.com"));
-        PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
+    public void shouldReturnCreatedPostDto() throws Exception {
+        User user = userRepository.save(buildUser(null, "test name", "example@mail.com"));
+        PostDto postDtoArg = buildPostDto(null, "test title", "test text", null);
 
         mockMvc.perform(post("/posts/{userId}", user.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(postDTOArg)))
+                .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.title").value(postDTOArg.title()))
-                .andExpect(jsonPath("$.text").value(postDTOArg.text()))
+                .andExpect(jsonPath("$.title").value(postDtoArg.title()))
+                .andExpect(jsonPath("$.text").value(postDtoArg.text()))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.userId").value(user.getId()));
     }
 
     @Test
     public void shouldReturnBadRequest_BadArgs_newPost() throws Exception {
-        PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
+        PostDto postDtoArg = buildPostDto(null, null, "test text", null);
 
         mockMvc.perform(post("/posts/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                        .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title")
                         .value("Blank post title."));
@@ -174,30 +174,30 @@ public class PostControllerTest {
 	@Test
     public void shouldReturnBadRequest_UserIdNotPositive_newPost() throws Exception {
 		
-		PostDTO postDTOArg = testPostDTO(null, "some title", "test text", null);
+		PostDto postDtoArg = buildPostDto(null, "some title", "test text", null);
 		
         mockMvc.perform(post("/posts/-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                        .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
     }
 
     @Test
-    public void shouldReturnUpdatedPostDTO() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "example@mail.com"));
-        Post post = testPost(null, "test title", "test text");
+    public void shouldReturnUpdatedPostDto() throws Exception {
+        User user = userRepository.save(buildUser(null, "test name", "example@mail.com"));
+        Post post = buildPost(null, "test title", "test text");
         post.setUser(user);
         Post savedPost = postRepository.save(post);
-        PostDTO postDTOArg = testPostDTO(null, "changed title", "changed text", null);
+        PostDto postDtoArg = buildPostDto(null, "changed title", "changed text", null);
 
         mockMvc.perform(put("/posts/{postId}", savedPost.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(postDTOArg)))
+                .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(savedPost.getId()))
-                .andExpect(jsonPath("$.title").value(postDTOArg.title()))
-                .andExpect(jsonPath("$.text").value(postDTOArg.text()))
+                .andExpect(jsonPath("$.title").value(postDtoArg.title()))
+                .andExpect(jsonPath("$.text").value(postDtoArg.text()))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.userId").value(user.getId()));
     }
@@ -215,11 +215,11 @@ public class PostControllerTest {
 
     @Test
     public void shouldReturnBadRequest_BadArgs_updatePost() throws Exception {
-        PostDTO postDTOArg = testPostDTO(null, null, "test text", null);
+        PostDto postDtoArg = buildPostDto(null, null, "test text", null);
 
         mockMvc.perform(put("/posts/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                        .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title")
                         .value("Blank post title."));
@@ -227,11 +227,11 @@ public class PostControllerTest {
 
     @Test
     public void shouldReturnBadRequest_BadPostId_updatePost() throws Exception {
-        PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
+        PostDto postDtoArg = buildPostDto(null, "test title", "test text", null);
 
         mockMvc.perform(put("/posts/abc")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                        .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.Error")
                         .value("Invalid format: abc"));
@@ -239,19 +239,19 @@ public class PostControllerTest {
 	
 	@Test
     public void shouldReturnBadRequest_NotPositivePostId_updatePost() throws Exception {
-        PostDTO postDTOArg = testPostDTO(null, "test title", "test text", null);
+        PostDto postDtoArg = buildPostDto(null, "test title", "test text", null);
 
         mockMvc.perform(put("/posts/-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(postDTOArg)))
+                        .content(objectMapper.writeValueAsString(postDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.postId").value("PostId must be positive number."));
     }
 
     @Test
     public void shouldDeletePost() throws Exception {
-        User user = userRepository.save(testUser(null, "test name", "test mail"));
-        Post post = testPost(null, "test title", "test text");
+        User user = userRepository.save(buildUser(null, "test name", "test mail"));
+        Post post = buildPost(null, "test title", "test text");
         post.setUser(user);
         Post savedPost = postRepository.save(post);
 
@@ -282,7 +282,7 @@ public class PostControllerTest {
                         .value("Invalid format: abc"));
     }
 
-    private User testUser(Long userId, String username, String email) {
+    private User buildUser(Long userId, String username, String email) {
         User user = new User();
         user.setId(userId);
         user.setUserName(username);
@@ -292,7 +292,7 @@ public class PostControllerTest {
         return user;
     }
 
-    private Post testPost(Long id, String title, String text) {
+    private Post buildPost(Long id, String title, String text) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -302,7 +302,7 @@ public class PostControllerTest {
         return post;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto(Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 }

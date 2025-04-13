@@ -1,7 +1,7 @@
 package com.airplane.userpost.controller;
 
-import com.airplane.userpost.dto.PostDTO;
-import com.airplane.userpost.dto.UserDTO;
+import com.airplane.userpost.dto.PostDto;
+import com.airplane.userpost.dto.UserDto;
 import com.airplane.userpost.model.Post;
 import com.airplane.userpost.model.User;
 import com.airplane.userpost.repository.PostRepository;
@@ -28,7 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
-import java.util.stream.StreamSupport;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -61,13 +60,13 @@ public class UserControllerTest {
 
     @Test
     public void shouldReturnAllUsers() throws Exception {
-        User user1 = testUser(null, "test name1", "test mail1");
-        User user2 = testUser(null, "test name2", "test mail2");
+        User user1 = buildUser(null, "test name1", "test mail1");
+        User user2 = buildUser(null, "test name2", "test mail2");
 
-        Post post1 = testPost(null, "title1", "text1");
-        Post post2 = testPost(null, "title2", "text2");
-        Post post3 = testPost(null, "title3", "text3");
-        Post post4 = testPost(null, "title4", "text4");
+        Post post1 = buildPost(null, "title1", "text1");
+        Post post2 = buildPost(null, "title2", "text2");
+        Post post3 = buildPost(null, "title3", "text3");
+        Post post4 = buildPost(null, "title4", "text4");
 
         post1.setUser(user1);
         post2.setUser(user2);
@@ -116,10 +115,10 @@ public class UserControllerTest {
 
     @Test
     public void shouldReturnUserById() throws Exception {
-        User user1 = testUser(null, "test name1", "test mail1");
+        User user1 = buildUser(null, "test name1", "test mail1");
 
-        Post post1 = testPost(null, "title1", "text1");
-        Post post2 = testPost(null, "title2", "text2");
+        Post post1 = buildPost(null, "title1", "text1");
+        Post post2 = buildPost(null, "title2", "text2");
 
         post1.setUser(user1);
         post2.setUser(user1);
@@ -148,10 +147,10 @@ public class UserControllerTest {
     public void hibernateNPlus1Test() throws Exception {
 
         for(int i = 1; i < 6; i++) {
-            User user = testUser(null, "test name" + i, "test mail1" + i);
+            User user = buildUser(null, "test name" + i, "test mail1" + i);
 
             for(int j = 1; j < 5; j++) {
-                Post post = testPost(null, "title" + j, "text" + j);
+                Post post = buildPost(null, "title" + j, "text" + j);
                 post.setUser(user);
                 user.addPost(post);
             }
@@ -201,11 +200,11 @@ public class UserControllerTest {
 
     @Test
     public void shouldReturnCreatedUser() throws Exception {
-        UserDTO user1 = testUserDTO(null, "test name1", "example@mail.com");
+        UserDto user1 = buildUserDto(null, "test name1", "example@mail.com");
 
         //Posts won't be saved with new user
-        PostDTO post1 = testPostDTO(null, "title1", "text1", null);
-        PostDTO post2 = testPostDTO(null, "title2", "text2", null);
+        PostDto post1 = buildPostDto(null, "title1", "text1", null);
+        PostDto post2 = buildPostDto(null, "title2", "text2", null);
 
         user1.addPost(post1);
         user1.addPost(post2);
@@ -222,12 +221,12 @@ public class UserControllerTest {
     }
 	
 	@Test
-    public void shouldReturnBadRequest_NullUserDTOFields_newUser() throws Exception {
-        UserDTO userDTOArg = testUserDTO(null, null, null);
+    public void shouldReturnBadRequest_NullUserDtoFields_newUser() throws Exception {
+        UserDto userDtoArg = buildUserDto(null, null, null);
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.userName").value("Username is empty."))
 				.andExpect(jsonPath("$.email").value("Email is empty."));
@@ -235,17 +234,17 @@ public class UserControllerTest {
 	
 	@Test
     public void shouldReturnBadRequest_BadEmail_newUser() throws Exception {
-        UserDTO userDTOArg = testUserDTO(null, "test username", "bad email");
+        UserDto userDtoArg = buildUserDto(null, "test username", "bad email");
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.email").value("Invalid email format."));
     }
 	
 	@Test
-    public void shouldReturnBadRequest_NullUserDTO_newUser() throws Exception {
+    public void shouldReturnBadRequest_NullUserDto_newUser() throws Exception {
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -258,29 +257,29 @@ public class UserControllerTest {
     @Test
     public void shouldReturnBadRequest_DuplicateFields_newUser() throws Exception {
 
-        UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+        UserDto userDtoArg = buildUserDto(null, "test username", "example@mail.com");
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value("test username"))
                 .andExpect(jsonPath("$.email").value("example@mail.com"));
 
-        UserDTO userDTOArg2 = testUserDTO(null, "test username", "example@mail.com");
+        UserDto userDtoArg2 = buildUserDto(null, "test username", "example@mail.com");
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDTOArg2)))
+                .content(objectMapper.writeValueAsString(userDtoArg2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.Error").value("Unique index or primary key violation."));
     }
 
     @Test
     public void shouldReturnUpdatedUser() throws Exception {
-        User user = testUser(null, "test name1", "example@mail.com");
+        User user = buildUser(null, "test name1", "example@mail.com");
         User savedUser = userRepository.save(user);
 
-        Post post1 = testPost(null, "title1", "text1");
-        Post post2 = testPost(null, "title2", "text2");
+        Post post1 = buildPost(null, "title1", "text1");
+        Post post2 = buildPost(null, "title2", "text2");
 
         post1.setUser(savedUser);
         post2.setUser(savedUser);
@@ -290,10 +289,10 @@ public class UserControllerTest {
         Post savedPost1 = postRepository.save(post1);
         Post savedPost2 = postRepository.save(post2);
 
-        UserDTO userArg = testUserDTO(null, "changed name1", "changed@mail.com");
+        UserDto userArg = buildUserDto(null, "changed name1", "changed@mail.com");
 
-        PostDTO post1Arg = testPostDTO(savedPost1.getId(), "changed title1", "changed text1", savedUser.getId());
-        PostDTO post3 = testPostDTO(null, "title3", "text3", savedUser.getId());
+        PostDto post1Arg = buildPostDto(savedPost1.getId(), "changed title1", "changed text1", savedUser.getId());
+        PostDto post3 = buildPostDto(null, "title3", "text3", savedUser.getId());
 
         userArg.addPost(post1Arg);
         userArg.addPost(post3);
@@ -316,13 +315,13 @@ public class UserControllerTest {
     }
 	
 	@Test
-    public void shouldReturnBadRequest_NullUserDTOFields_updateUser() throws Exception {
+    public void shouldReturnBadRequest_NullUserDtoFields_updateUser() throws Exception {
 		
-        UserDTO userDTOArg = testUserDTO(null, null, null);
+        UserDto userDtoArg = buildUserDto(null, null, null);
 
         mockMvc.perform(put("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.userName").value("Username is empty."))
 				.andExpect(jsonPath("$.email").value("Email is empty."));
@@ -331,17 +330,17 @@ public class UserControllerTest {
 	@Test
     public void shouldReturnBadRequest_BadEmail_updateUser() throws Exception {
 		
-        UserDTO userDTOArg = testUserDTO(null, "test username", "bad email");
+        UserDto userDtoArg = buildUserDto(null, "test username", "bad email");
 
         mockMvc.perform(put("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.email").value("Invalid email format."));
     }
 	
 	@Test
-    public void shouldReturnBadRequest_NullUserDTO_updateUser() throws Exception {
+    public void shouldReturnBadRequest_NullUserDto_updateUser() throws Exception {
 
         mockMvc.perform(put("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -354,11 +353,11 @@ public class UserControllerTest {
 	@Test
     public void shouldReturnNotFound_updateUser() throws Exception {
 		
-		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		UserDto userDtoArg = buildUserDto(null, "test username", "example@mail.com");
 		
         mockMvc.perform(put("/users/10")
                         .contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(userDTOArg)))
+						.content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.Error").value("User not found with Id: 10"));
     }
@@ -366,11 +365,11 @@ public class UserControllerTest {
 	@Test
     public void shouldReturnBadRequest_InvalidPathVariable_updateUser() throws Exception {
 		
-		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		UserDto userDtoArg = buildUserDto(null, "test username", "example@mail.com");
 		
         mockMvc.perform(put("/users/abc")
                         .contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(userDTOArg)))
+						.content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.Error").value("Invalid format: abc"));
     }
@@ -378,11 +377,11 @@ public class UserControllerTest {
 	@Test
     public void shouldReturnBadRequest_UserIdNotPositive_updateUser() throws Exception {
 		
-		UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+		UserDto userDtoArg = buildUserDto(null, "test username", "example@mail.com");
 		
         mockMvc.perform(put("/users/-1")
                         .contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(userDTOArg)))
+						.content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
     }
@@ -390,45 +389,45 @@ public class UserControllerTest {
     @Test
     public void shouldReturnBadRequest_DuplicateFields_updateUser() throws Exception {
 
-        UserDTO userDTOArg = testUserDTO(null, "test username", "example@mail.com");
+        UserDto userDtoArg = buildUserDto(null, "test username", "example@mail.com");
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg)))
+                        .content(objectMapper.writeValueAsString(userDtoArg)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value("test username"))
                 .andExpect(jsonPath("$.email").value("example@mail.com"));
 
-        UserDTO userDTOArg2 = testUserDTO(null, "other username", "other@mail.com");
+        UserDto userDtoArg2 = buildUserDto(null, "other username", "other@mail.com");
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArg2)))
+                        .content(objectMapper.writeValueAsString(userDtoArg2)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value("other username"))
                 .andExpect(jsonPath("$.email").value("other@mail.com"));
 
         var users = userRepository.findAll();
-        User user = StreamSupport.stream(users.spliterator(), false)
+        User user = users.stream()
                 .filter(u -> u.getUserName().equals("other username"))
                 .findFirst()
                 .orElse(null);
 
         assertNotNull(user);
 
-        UserDTO userDTOArgDuplicate = testUserDTO(null, "test username", "example@mail.com");
+        UserDto userDtoArgDuplicate = buildUserDto(null, "test username", "example@mail.com");
         mockMvc.perform(put("/users/{id}", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDTOArgDuplicate)))
+                        .content(objectMapper.writeValueAsString(userDtoArgDuplicate)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.Error").value("Unique index or primary key violation."));
     }
 
     @Test
     public void shouldDeleteUser() throws Exception {
-        User user = testUser(null, "test name1", "test mail1");
+        User user = buildUser(null, "test name1", "test mail1");
         User savedUser = userRepository.save(user);
 
-        Post post1 = testPost(null, "title1", "text1");
-        Post post2 = testPost(null, "title2", "text2");
+        Post post1 = buildPost(null, "title1", "text1");
+        Post post2 = buildPost(null, "title2", "text2");
 
         post1.setUser(user);
         post2.setUser(user);
@@ -469,7 +468,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.userId").value("UserId must be positive number."));
     }
 
-    private User testUser(Long userId, String username, String email) {
+    private User buildUser(Long userId, String username, String email) {
         User user = new User();
         user.setId(userId);
         user.setUserName(username);
@@ -479,7 +478,7 @@ public class UserControllerTest {
         return user;
     }
 
-    private Post testPost(Long id, String title, String text) {
+    private Post buildPost(Long id, String title, String text) {
         Post post = new Post();
         post.setId(id);
         post.setTitle(title);
@@ -489,11 +488,12 @@ public class UserControllerTest {
         return post;
     }
 
-    private PostDTO testPostDTO(Long id, String title, String text, Long userId) {
-        return new PostDTO(id, title, text, LocalDateTime.now(), userId);
+    private PostDto buildPostDto
+            (Long id, String title, String text, Long userId) {
+        return new PostDto(id, title, text, LocalDateTime.now(), userId);
     }
 
-    private UserDTO testUserDTO(Long userId, String username, String email) {
-        return new UserDTO(userId, username, email, LocalDateTime.now());
+    private UserDto buildUserDto(Long userId, String username, String email) {
+        return new UserDto(userId, username, email, LocalDateTime.now());
     }
 }

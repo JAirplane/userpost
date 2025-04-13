@@ -4,8 +4,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+    
+    <changeSet id="1" author="Eugene Shevchenko">
+        <sqlFile path="/changes/db.changelog-1.0.sql"/>
+    </changeSet>
 
-    <include file="/changes/db.changelog-1.0.xml" relativeToChangelogFile="true"/>
-    <include file="/changes/db.changelog-2.0.xml" relativeToChangelogFile="true"/>
+    <changeSet id="2" author="Eugene Shevchenko">
+        <sqlFile path="/changes/db.changelog-2.0.sql"/>
+    </changeSet>
 
 </databaseChangeLog>

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public record PostDTO(Long id, @NotBlank(message = "Blank post title.") String title,
+public record PostDto(Long id, @NotBlank(message = "Blank post title.") String title,
                       String text, LocalDateTime createdAt, Long userId) {
 
     @Override
@@ -13,7 +13,7 @@ public record PostDTO(Long id, @NotBlank(message = "Blank post title.") String t
         if(this == obj) return true;
         if(obj == null || this.getClass() != obj.getClass()) return false;
 
-        PostDTO other = (PostDTO) obj;
+        PostDto other = (PostDto) obj;
         return Objects.equals(this.id, other.id)
                 && Objects.equals(this.title, other.title)
                 && Objects.equals(this.text, other.text)
